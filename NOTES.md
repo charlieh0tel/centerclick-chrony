@@ -157,6 +157,12 @@ Stock bootloader: Rockchip miniloader with DDR blob "DDR Version V1.26"
 
 - The micro-USB CH340N carries `ttyS2`: it shows "...Booting" and the
   admin login at 115200 (`stock/boot.log`).
+- `ttyS0` at 1500000 confirmed on the bare module (USB-C power, carrier
+  removed): FTDI TTL-232R-3V3 on module header 1 pins 6 (GND), 8 (TX),
+  10 (RX).  Kernel log plus a `serial-getty` login on `ttyS0`
+  (`stock/boot-ttyS0-module.log`, starts at kernel time 0.548 s).
+- Carrier header "UART0" (TX/RX/GND): no output at 1500000 or 115200,
+  either wire order.  Cause unknown (R25/R26 fitted?).
 
 ## rkbin RK3308 binaries
 
@@ -172,4 +178,4 @@ Source: `rockchip-linux/rkbin` `master`, `RKBOOT/RK3308MINIALL.ini` and
 ## Open questions
 
 - Confirm mainline `rk3308-rock-pi-s.dts` covers V1.3.
-- Confirm base-board "UART0" header carries module pins 8/10.
+- Why the base-board "UART0" header shows no output.
