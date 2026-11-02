@@ -168,6 +168,8 @@ Stock bootloader: Rockchip miniloader with DDR blob "DDR Version V1.26"
   `uboot.img`, `strings uboot.img`.
 - Kernel output on `ttyS0` begins at 0.548 s; nothing before it appears
   on uart0.
+- Bare module, module header 1 pins 19/21/20 at 1500000, either wire
+  order: no loader or U-Boot output seen.
 - Carrier header "UART0" (TX/RX/GND): no output at 1500000 or 115200,
   either wire order.  Cause unknown (R25/R26 fitted?).
 
