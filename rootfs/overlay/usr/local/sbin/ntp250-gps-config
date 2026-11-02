@@ -1,0 +1,39 @@
+#!/bin/sh
+# Configure the u-blox MAX-M8Q on uart1 before gpsd starts.  The M8Q has
+# no flash: settings survive only in battery-backed RAM (supercap, about
+# 3 h), so this runs at every boot.  Settings and reasons: NOTES.md "GPS
+# configuration".
+set -eu
+
+dev=/dev/ttyS1
+
+ubx() {
+    ubxtool -f "$dev" -P 18 -w 1 "$@"
+}
+
+# apply ARGS...: send one setting at 115200; fail unless acknowledged.
+apply() {
+    ubx -s 115200 "$@" 2>&1 | grep -q UBX-ACK-ACK || {
+        echo "ntp250-gps-config: no ACK for $*" >&2
+        exit 1
+    }
+}
+
+# Factory defaults from either speed (only one gets through); afterwards
+# the receiver runs at 9600.
+ubx -s 115200 -p RESET >/dev/null 2>&1 || true
+ubx -s 9600 -p RESET >/dev/null 2>&1 || true
+sleep 2
+ubx -s 9600 -S 115200 >/dev/null 2>&1
+
+apply -e GPS
+apply -e GALILEO
+apply -d GLONASS
+apply -d BEIDOU
+apply -p MODEL,2
+apply -p CFG-MSG,0xf0,0x01,0
+apply -p CFG-MSG,0xf0,0x02,0
+apply -p CFG-MSG,0xf0,0x03,0
+apply -p CFG-MSG,0xf0,0x05,0
+apply -p CFG-MSG,0xf0,0x08,1
+apply -p SAVE

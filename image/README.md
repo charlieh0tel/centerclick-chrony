@@ -42,7 +42,8 @@ from a tarball).
 | Hostname | `ntp250` |
 | Carrier GPIOs | named lines (`gpioinfo`); `ntp250-gpio-init.service` sets `gps-nreset`=1, `gps-reset`=0, `hdr-ppsout-en`=0 at boot |
 | GPS reset | `ntp250-gps-reset` (0.5 s pulse, as stock `cc_resetgps`) |
-| GPS daemon | `gpsd -n /dev/ttyS1` (`/etc/default/gpsd`), after `ntp250-gpio-init` |
+| GPS config | `ntp250-gps-config.service` at every boot: factory reset, 115200, GPS+Galileo (no GLONASS/BeiDou), stationary, NMEA GGA/RMC/ZDA; see `NOTES.md` "GPS configuration" |
+| GPS daemon | `gpsd -n -b -s 115200 /dev/ttyS1` (`/etc/default/gpsd`), after `ntp250-gps-config` |
 | chrony | `/etc/chrony/conf.d/ntp250.conf`: SHM 0 `NMEA` (noselect, offset uncalibrated), `/dev/pps0` `PPS` locked to NMEA, preferred; Debian pool as sanity sources; serves NTP to all |
 | Disabled | eMMC (not fitted), Wi-Fi (SDIO), Bluetooth (uart4) |
 

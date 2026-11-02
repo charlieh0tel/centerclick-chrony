@@ -1,0 +1,13 @@
+[Unit]
+Description=Configure the u-blox GPS (NOTES.md "GPS configuration")
+After=ntp250-gpio-init.service
+Wants=ntp250-gpio-init.service
+Before=gpsd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/ntp250-gps-config
+
+[Install]
+WantedBy=multi-user.target

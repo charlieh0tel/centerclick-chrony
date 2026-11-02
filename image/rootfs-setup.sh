@@ -40,5 +40,6 @@ rm -f /etc/ssh/ssh_host_*
 depmod -a "$(ls /usr/lib/modules)"
 
 systemctl enable systemd-networkd systemd-resolved \
-    ntp250-ssh-hostkeys.service ntp250-gpio-init.service gpsd.service \
+    ntp250-ssh-hostkeys.service ntp250-gpio-init.service \
+    ntp250-gps-config.service gpsd.service \
     serial-getty@ttyS0.service serial-getty@ttyS2.service

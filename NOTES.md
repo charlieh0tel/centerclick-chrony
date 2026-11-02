@@ -127,6 +127,41 @@ Source: u-blox boot banner on `ttyS1` after `ntp250-gps-reset`.
 - NMEA at 9600 baud by default; GNSS OTP GPS and GLONASS.
 - Antenna supervisor: `ANTSUPERV=AC SD PDoS SR`.
 
+## GPS configuration
+
+Applied at every boot by `ntp250-gps-config.service`
+(`rootfs/overlay/usr/local/sbin/ntp250-gps-config`), after
+`ntp250-gpio-init` and before gpsd.  The MAX-M8Q has no flash; `SAVE`
+reaches battery-backed RAM only (supercap, about 3 h).  Each setting must
+return `UBX-ACK-ACK`, or the service fails.
+
+| Setting | Value | ubxtool | Reason |
+|---|---|---|---|
+| Start state | factory defaults | `-p RESET` at 115200 and at 9600 | No leftovers (gpsd without `-b` had disabled RMC/GGA and saved it) |
+| UART1 speed | 115200 | `-s 9600 -S 115200` | Lower NMEA latency; stock used 115200 |
+| GNSS | GPS (with QZSS), Galileo, SBAS on; GLONASS, BeiDou off | `-e GPS -e GALILEO -d GLONASS -d BEIDOU` | Owner's choice: no GLONASS |
+| Dynamic model | 2, stationary | `-p MODEL,2` | Fixed antenna |
+| NMEA | GGA, RMC, ZDA at 1 Hz; GLL, GSA, GSV, VTG off | `-p CFG-MSG,0xf0,ID,RATE` | Only what gpsd needs for time; less latency |
+| Timepulse (CFG-TP5) | factory: 1 Hz, 100 ms when locked, none until locked, rising edge, aligned to the second, antCableDelay 50 ns | not changed | Matches chrony `refclock PPS` (assert edge) |
+| Save | BBR | `-p SAVE` | Warm start after short power loss |
+
+Readback on 2026-11-02 (`ubxtool -p CFG-GNSS`, `CFG-NAV5`, `CFG-PRT,1`,
+`CFG-TP5`): gnssId 0, 1, 2, 5 enabled; 3, 6 disabled; `dynModel 2`; UART1
+115200, in/out UBX+NMEA; TP5 flags 0x77.
+
+gpsd: `-n -b -s 115200 /dev/ttyS1` (`/etc/default/gpsd`); `-b` keeps it
+from reconfiguring the receiver.
+
+Measured: NMEA offset +161 ms at 9600 with all default sentences, +33 ms
+at 115200 with GGA/RMC/ZDA; stratum 1 on PPS about 55 s after boot (warm
+start); first fix after power-up without valid time: about 13 min.
+
+## MAC address
+
+`ce:e9:6b:89:b0:4e`, set by U-Boot from the RK3308 CPU ID
+(`arch/arm/mach-rockchip/board.c` `misc_init_r()`); locally administered,
+stable per SoC.  No EEPROM on this carrier, so no other source.
+
 ## Stock time services
 
 | Item | Value | Source |

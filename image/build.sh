@@ -48,7 +48,7 @@ readonly PACKAGES=(
     systemd-sysv systemd-resolved udev dbus kmod
     iproute2 iputils-ping ca-certificates less
     openssh-server
-    chrony gpsd gpsd-tools python3-gps pps-tools
+    chrony gpsd gpsd-tools python3-gps python3-serial pps-tools
     gpiod i2c-tools
 )
 
