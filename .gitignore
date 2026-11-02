@@ -2,3 +2,4 @@ stock/*.dd
 stock/*.img
 stock/extracted/
 out/
+*~
