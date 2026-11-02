@@ -105,7 +105,7 @@ overlays are applied); module header pins from Radxa
 | LED `green:system` | GPIO2_A7 | 22 | trigger timer | 2812 |
 | LED `green:sd` | GPIO2_A5 | 12 | trigger mmc0 | 2819 |
 | LED `green:ntp` | GPIO2_B5 | 28 | trigger none | 2826 |
-| Button SW1 `fp-button-1` | GPIO2_B1 | 18 | gpio-export input | 2760 |
+| Button SW1 `fp-button-1` | GPIO2_B1 | 18 | gpio-export input, flag 0 (active high); measured: high while pressed, SoC pull-down when idle | 2760 |
 | `hdr-ppsout-en` | GPIO2_A4 | 7 | gpio-export output, low | 2765 |
 | `gps-nreset` | GPIO2_B7 | 32 | gpio-export output, high | 2776 |
 | `gps-reset` | GPIO2_C0 | 34 | gpio-export output, low | 2782 |
