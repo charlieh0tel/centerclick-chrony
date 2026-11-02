@@ -199,8 +199,7 @@ chronymon NTP samples of chronos, medians), 2026-11-02:
 | Mainline | no TSADC node in `rk3308.dtsi`, no `rockchip,rk3308-tsadc` match; added by `image/patches/linux/` (RK3328 data, 2 channels, as the Rockchip vendor driver) and `dts/rk3308-ntp250.dts` | Linux 6.18 |
 | Shutdown | hardware TSHUT via CRU at 120 C; critical trips 115 C | stock DTB |
 | Noise | 0.45 C step, 0.55 C sd per reading (90 readings at 1 s, idle) | measured 2026-11-02 |
-| Averaging | `ntp250-temperature.service`: mean of both zones over 32 readings at 1 s, to `/run/ntp250/temperature` every 32 s | `rootfs/overlay/usr/local/sbin/ntp250-temperature` |
-| chrony | `tempcomp /run/ntp250/temperature 32 40000 0 0 0`; coefficients zero until fitted from `tempcomp.log` against `tracking.log` frequency | `rootfs/overlay/etc/chrony/conf.d/ntp250.conf` |
+| chrony | `tempcomp /sys/class/thermal/thermal_zone0/temp 32 40000 0 0 0`, one reading every 32 s; coefficients zero until fitted from `tempcomp.log` against `tracking.log` frequency | `rootfs/overlay/etc/chrony/conf.d/ntp250.conf` |
 
 ## MAC address
 
