@@ -1,0 +1,5 @@
+# NTP250: u-blox MAX-M8Q on uart1.  -n: poll the GPS without waiting for a
+# client, so chrony's SHM refclock gets time from boot on.
+DEVICES="/dev/ttyS1"
+GPSD_OPTIONS="-n"
+USBAUTO="false"
