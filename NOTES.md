@@ -161,6 +161,13 @@ Stock bootloader: Rockchip miniloader with DDR blob "DDR Version V1.26"
   removed): FTDI TTL-232R-3V3 on module header 1 pins 6 (GND), 8 (TX),
   10 (RX).  Kernel log plus a `serial-getty` login on `ttyS0`
   (`stock/boot-ttyS0-module.log`, starts at kernel time 0.548 s).
+- Stock U-Boot console is uart2 (`ttyS2`, uart2m0, module header 1
+  pins 19 TX, 21 RX), not uart0: its embedded DTB enables only
+  `serial@ff0c0000` and sets `chosen/stdout-path = "/serial@ff0c0000"`;
+  env `baudrate=1500000`.  Source: DTB at offset 0x85430 in
+  `uboot.img`, `strings uboot.img`.
+- Kernel output on `ttyS0` begins at 0.548 s; nothing before it appears
+  on uart0.
 - Carrier header "UART0" (TX/RX/GND): no output at 1500000 or 115200,
   either wire order.  Cause unknown (R25/R26 fitted?).
 
