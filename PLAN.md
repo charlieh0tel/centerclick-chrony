@@ -14,7 +14,7 @@ Boot a self-built Linux image from microSD on the CenterClick NTP250 and run chr
 | RAM | 512 MiB |
 | Boot media | microSD, stock card is a Gigastone 8 GB |
 | GPS | u-blox MAX-M8Q, active 3.3 V antenna; GPS I2C also wired to the CPU |
-| Console | micro-USB via CH340N, probably `ttyS2` (stock admin CLI, 115200 8N1); kernel console is `ttyS0` at 1500000 8N1 |
+| Console | micro-USB via CH340N is `ttyS2` (stock admin CLI, 115200 8N1); kernel console is `ttyS0` at 1500000 8N1, not on micro-USB |
 | Ethernet | 10/100 |
 | Power | PoE (in use) or 7-11 V DC on this rev |
 | RTC + GPS backup | Supercap, about 3 h holdover |

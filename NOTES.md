@@ -126,4 +126,16 @@ Stock bootloader: Rockchip miniloader with DDR blob "DDR Version V1.26"
 | `ttyS0` (uart0) | kernel and U-Boot console | 1500000 8N1 | `boot.scr` bootargs |
 | `ttyS2` (`/dev/serial/user`) | "...Booting" message, then `agetty` login to the admin CLI | 115200 | `rootfs/usr/lib/systemd/system/cc-bootmsg*.service`, `rootfs/usr/sbin/cc_console_service` |
 
-- Which UART the micro-USB CH340N carries is unconfirmed.
+- The micro-USB CH340N carries `ttyS2`: it shows "...Booting" and the
+  admin login at 115200 (`stock/boot.log`).
+
+## rkbin RK3308 binaries
+
+Source: `rockchip-linux/rkbin` `master`, `RKBOOT/RK3308MINIALL.ini` and
+`bin/rk33/`, 2026-11-01.
+
+- One RK3308 set; no RK3308B-specific files.
+- DDR init v2.11 at 393, 451 or 589 MHz, debug UART `uart2_m1` or
+  `uart4_m0` only (this board uses uart0 for console, uart2_m0 for the
+  admin CLI).
+- BL31 `rk3308_bl31_v2.28.elf`.
