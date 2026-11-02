@@ -173,6 +173,28 @@ Stock bootloader: Rockchip miniloader with DDR blob "DDR Version V1.26"
 - Carrier header "UART0" (TX/RX/GND): no output at 1500000 or 115200,
   either wire order.  Cause unknown (R25/R26 fitted?).
 
+## Consoles in our image
+
+Source: `image/u-boot.config`, `image/patches/u-boot/`, `image/build.sh`;
+tested on the carrier and the bare module.
+
+| Stage | uart0 (module pins 8/10) | uart2 (carrier micro-USB) |
+|---|---|---|
+| DDR init v1.26 | yes | no |
+| U-Boot SPL | yes | no |
+| U-Boot proper | yes | from `preboot` (autoboot prompt) on |
+| Linux kernel | no | yes (`console=ttyS2`, `earlycon` at 0xff0c0000) |
+| Login | root autologin | root autologin |
+
+- Linux has one 8250 console: with `console=ttyS0 console=ttyS2`, only
+  `ttyS0` registers (`/proc/consoles`).
+- U-Boot on uart2 needs `CONFIG_SERIAL_PROBE_ALL` (otherwise uart2 is not
+  probed and the console mux skips it) and uart2 on the 24 MHz
+  oscillator (DDR init leaves it on DPLL/16; patch 0002).
+- Carrier micro-USB path works at 1500000 baud.
+- Carrier header "UART0": uart0 RX reaches the SoC (noise counted on
+  `ttyS0` while wiring); uart0 TX does not reach the header.
+
 ## rkbin RK3308 binaries
 
 Source: `rockchip-linux/rkbin`, `bin/rk33/`, `RKBOOT/RK3308MINIALL.ini`,
@@ -212,4 +234,4 @@ DTB `io-domains` node.
 
 - Mainline `rk3308-rock-pi-s.dts` vccio2/vccio3 at 3.3 V: wrong for
   V1.3, or for all revisions?
-- Why the base-board "UART0" header shows no output.
+- Why the carrier "UART0" header gets no uart0 TX (R25/R26? Q2/Q3?).

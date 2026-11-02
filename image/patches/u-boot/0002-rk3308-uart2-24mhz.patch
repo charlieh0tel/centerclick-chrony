@@ -1,0 +1,37 @@
+--- a/arch/arm/mach-rockchip/rk3308/rk3308.c
++++ b/arch/arm/mach-rockchip/rk3308/rk3308.c
+@@ -5,6 +5,7 @@
+ #include <init.h>
+ #include <asm/armv8/mmu.h>
+ #include <asm/arch-rockchip/bootrom.h>
++#include <asm/arch-rockchip/cru_rk3308.h>
+ #include <asm/arch-rockchip/grf_rk3308.h>
+ #include <asm/arch-rockchip/hardware.h>
+ #include <linux/bitops.h>
+@@ -33,6 +34,7 @@
+ 
+ #define GRF_BASE	0xff000000
+ #define SGRF_BASE	0xff2b0000
++#define CRU_BASE	0xff500000
+ 
+ enum {
+ 	GPIO4D3_SHIFT           = 6,
+@@ -123,6 +125,18 @@
+ {
+ 	static struct rk3308_sgrf * const sgrf = (void *)SGRF_BASE;
+ 	static struct rk3308_grf * const grf = (void *)GRF_BASE;
++	static struct rk3308_cru * const cru = (void *)CRU_BASE;
++
++	/*
++	 * NTP250: run UART2 (carrier console) from the 24 MHz oscillator,
++	 * which the serial driver assumes; DDR init leaves it on DPLL.
++	 * CLKSEL_CON16: source and divider; CLKSEL_CON17[15:14]: source,
++	 * not the fractional divider.
++	 */
++	rk_clrsetreg(&cru->clksel_con[16],
++		     CLK_UART_PLL_SEL_MASK | CLK_UART_DIV_CON_MASK,
++		     CLK_UART_PLL_SEL_24M << CLK_UART_PLL_SEL_SHIFT);
++	rk_clrreg(&cru->clksel_con[17], GENMASK(15, 14));
+ 
+ 	/* Set CRYPTO SDMMC EMMC NAND SFC USB master bus to be secure access */
+ 	rk_clrreg(&sgrf->con_secure0, 0x2b83);

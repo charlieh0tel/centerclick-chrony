@@ -38,7 +38,10 @@ readonly DEBIAN_KEYRING=/usr/share/keyrings/debian-archive-keyring.gpg
 
 readonly HOSTNAME=ntp250
 readonly DTB=rockchip/rk3308-ntp250.dtb
-readonly CONSOLE=ttyS0,1500000n8
+# Kernel console: uart2 (carrier micro-USB), from the first message.  Only
+# one ttyS port can be a kernel console; uart0 (module header 1) gets a
+# login only.
+readonly KERNEL_CONSOLE="console=ttyS2,1500000n8 earlycon=uart8250,mmio32,0xff0c0000"
 
 # Debian packages on top of the minbase variant.
 readonly PACKAGES=(
@@ -95,6 +98,20 @@ apply_patches() {
     done
 }
 
+# merge_config SRC FRAGMENT MAKE...: merge FRAGMENT over SRC/.config,
+# resolve dependencies with MAKE, and fail if any FRAGMENT line did not
+# survive.
+merge_config() {
+    local src=$1 fragment=$2 line
+    shift 2
+    (cd "$src" && scripts/kconfig/merge_config.sh -m .config "$fragment")
+    "$@" olddefconfig
+    while read -r line; do
+        [[ $line == CONFIG_* ]] || continue
+        grep -qxF "$line" "$src/.config" || die "$src/.config lacks $line"
+    done <"$fragment"
+}
+
 stage_fetch() {
     mkdir -p "$DL"
     fetch "$LINUX_URL" "$LINUX_SHA256"
@@ -105,19 +122,19 @@ stage_fetch() {
 
 stage_uboot() {
     local src=$BUILD/u-boot
+    local umake=(make -C "$src" CROSS_COMPILE="$CROSS" -j"$JOBS")
     log "u-boot $UBOOT_VERSION"
     unpack "$DL/${UBOOT_URL##*/}" "$src"
     apply_patches u-boot "$src"
-    make -C "$src" CROSS_COMPILE="$CROSS" "$UBOOT_DEFCONFIG"
-    make -C "$src" CROSS_COMPILE="$CROSS" -j"$JOBS" \
-        BL31="$DL/$RKBIN_BL31" ROCKCHIP_TPL="$DL/$RKBIN_DDR"
+    "${umake[@]}" "$UBOOT_DEFCONFIG"
+    merge_config "$src" "$ROOT/image/u-boot.config" "${umake[@]}"
+    "${umake[@]}" BL31="$DL/$RKBIN_BL31" ROCKCHIP_TPL="$DL/$RKBIN_DDR"
     cp "$src/u-boot-rockchip.bin" "$BUILD/"
 }
 
 stage_kernel() {
     local src=$BUILD/linux staging=$BUILD/kernel-staging
     local kmake=(make -C "$src" ARCH=arm64 CROSS_COMPILE="$CROSS" -j"$JOBS")
-    local line
     log "linux $LINUX_VERSION"
     unpack "$DL/${LINUX_URL##*/}" "$src"
     cp "$ROOT/dts/rk3308-ntp250.dts" "$src/arch/arm64/boot/dts/rockchip/"
@@ -125,13 +142,7 @@ stage_kernel() {
     echo 'dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3308-ntp250.dtb' \
         >>"$src/arch/arm64/boot/dts/rockchip/Makefile"
     "${kmake[@]}" defconfig
-    (cd "$src" && ARCH=arm64 scripts/kconfig/merge_config.sh -m .config \
-        "$ROOT/image/kernel.config")
-    "${kmake[@]}" olddefconfig
-    while read -r line; do
-        [[ $line == CONFIG_* ]] || continue
-        grep -qx "$line" "$src/.config" || die "kernel config lacks $line"
-    done <"$ROOT/image/kernel.config"
+    merge_config "$src" "$ROOT/image/kernel.config" "${kmake[@]}"
     "${kmake[@]}" Image modules dtbs
     rm -rf "$staging"
     mkdir -p "$staging/boot/dtbs/rockchip"
@@ -159,7 +170,7 @@ stage_rootfs() {
         --customize-hook="tar-in '$BUILD/kernel.tar' /" \
         --customize-hook="upload '$AUTHORIZED_KEYS' /root/.ssh/authorized_keys" \
         --customize-hook="upload '$ROOT/image/rootfs-setup.sh' /tmp/rootfs-setup.sh" \
-        --customize-hook="chroot \"\$1\" sh /tmp/rootfs-setup.sh '$HOSTNAME' '$ROOT_PARTUUID' '$CONSOLE' '$DTB'" \
+        --customize-hook="chroot \"\$1\" sh /tmp/rootfs-setup.sh '$HOSTNAME' '$ROOT_PARTUUID' '$KERNEL_CONSOLE' '$DTB'" \
         --customize-hook='rm "$1/tmp/rootfs-setup.sh"' \
         "$DEBIAN_SUITE" "$BUILD/rootfs.tar" "$DEBIAN_MIRROR"
 }

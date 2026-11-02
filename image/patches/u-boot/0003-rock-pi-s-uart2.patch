@@ -1,0 +1,11 @@
+--- a/arch/arm/dts/rk3308-rock-pi-s-u-boot.dtsi
++++ b/arch/arm/dts/rk3308-rock-pi-s-u-boot.dtsi
+@@ -33,3 +33,8 @@
+ 	vccio2-supply = <&vcc_1v8>;
+ 	vccio3-supply = <&vcc_1v8>;
+ };
++
++/* NTP250: carrier micro-USB console (CH340N), muxed with uart0. */
++&uart2 {
++	status = "okay";
++};

@@ -1,11 +1,12 @@
 #!/bin/sh
 # Runs inside the arm64 root filesystem (mmdebstrap customize hook).
-# Usage: rootfs-setup.sh HOSTNAME ROOT_PARTUUID CONSOLE DTB
+# Usage: rootfs-setup.sh HOSTNAME ROOT_PARTUUID KERNEL_CONSOLE DTB
+# KERNEL_CONSOLE is the console and earlycon kernel arguments.
 set -eu
 
 hostname=$1
 root_partuuid=$2
-console=$3
+kernel_console=$3
 dtb=$4
 
 echo "$hostname" >/etc/hostname
@@ -25,7 +26,7 @@ timeout 10
 label ntp250
 	kernel /boot/Image
 	fdt /boot/dtbs/$dtb
-	append root=PARTUUID=$root_partuuid rootwait rw console=$console earlycon
+	append root=PARTUUID=$root_partuuid rootwait rw $kernel_console
 EOF
 
 chown -R root:root /root/.ssh
@@ -39,4 +40,5 @@ rm -f /etc/ssh/ssh_host_*
 depmod -a "$(ls /usr/lib/modules)"
 
 systemctl enable systemd-networkd systemd-resolved \
-    ntp250-ssh-hostkeys.service serial-getty@ttyS2.service
+    ntp250-ssh-hostkeys.service \
+    serial-getty@ttyS0.service serial-getty@ttyS2.service

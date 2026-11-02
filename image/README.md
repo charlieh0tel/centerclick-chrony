@@ -35,8 +35,8 @@ from a tarball).
 | U-Boot | sector 64 (`u-boot-rockchip.bin`: idbloader + FIT) |
 | Root partition | GPT partition 1, sector 32768, 2048 MiB, PARTUUID `33f4c7e9-0436-473f-9913-48d960e86116`, legacy BIOS bootable |
 | Boot config | `/boot/extlinux/extlinux.conf`, `/boot/Image`, `/boot/dtbs/rockchip/rk3308-ntp250.dtb` |
-| Console | DDR init, U-Boot and kernel on `ttyS0` (uart0), 1500000 8N1, module header 1 pins 8 (TX), 10 (RX), 6 (GND); root autologin |
-| Second console | `ttyS2` (uart2, carrier micro-USB CH340N), 115200 8N1; root autologin |
+| Carrier console | `ttyS2` (uart2, carrier micro-USB CH340N), 1500000 8N1: U-Boot from the autoboot prompt on, kernel (`earlycon` from the first message), root autologin |
+| Module console | `ttyS0` (uart0, module header 1 pins 8 TX, 10 RX, 6 GND), 1500000 8N1: DDR init, SPL, U-Boot, root autologin; no kernel log |
 | Network | `systemd-networkd`, DHCP on Ethernet |
 | SSH | root by key only; host keys generated on first boot |
 | Hostname | `ntp250` |
