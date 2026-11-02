@@ -7,6 +7,9 @@
 | `stock/centerclick-ntp250.dd` | ext4 partition image, 4 GiB, last mounted on `/data`; not a whole-card image | `file`, `dumpe2fs -h` |
 | `stock/SHA256SUMS` | checksum of the above | `sha256sum` |
 | `stock/extracted/` | copy of `/backup2` from the image (gitignored) | `debugfs -c -R 'rdump /backup2 ...'` |
+| `stock/extracted/rootfs/` | unpacked `rootfs.squashfs` (gitignored) | `unsquashfs` |
+| `stock/ntp250.dts` | decompiled `boot/rk3308-rock-pi-s-chronos.dtb` | `dtc -I dtb -O dts` |
+| `stock/chronos-overlay.dts` | decompiled `boot/rockchip/overlays/chronos.dtbo` | `dtc -I dtb -O dts` |
 
 - `/backup` and `/backup2` hold identical `idbloader.img`, `uboot.img`,
   `trust.img`; `/backup2` also holds `rootfs.squashfs`.
@@ -36,18 +39,38 @@ Source: `boot/boot.scr`.
 - Overlays present in `boot/rockchip/overlays/`: `chronos.dtbo`,
   `i2c1-hym8563.dtbo`, `rk3308-i2c1.dtbo`, `rk3308-uart{0,1,2}.dtbo`.
 
-## Pin map (partial; GPIO numbers pending DTB decompile)
+## Pin map
 
-| Function | Value | Source |
-|---|---|---|
-| Linux console | `ttyS0`, 1500000 8N1 | `boot.scr`, `rootfs/etc/udev/rules.d/99-cc.rules` |
-| GPS UART | `ttyS1` (`/dev/gps0`) | `99-cc.rules` |
-| User UART | `ttyS2` | `99-cc.rules` |
-| PPS | `pps-gpio` node, `pps-pins` pinctrl | DTB strings |
-| RTC | `haoyu,hym8563` at I2C 0x51, bus `i2c@ff050000` (I2C1), IRQ pin `hym8563-int` | DTB strings |
-| LEDs | `led-system`, `led-ntp`, `led-sd`/`led-disk` (`chronos:green:*`), `blue-led` | DTB, `chronos.dtbo` strings |
-| GPS reset | `gps-reset`, `gps-nreset` (gpio-export) | DTB strings |
-| PPS out enable | `hdr-ppsout-en` (gpio-export) | DTB strings |
+Source: `stock/ntp250.dts` (decompiled from
+`boot/rk3308-rock-pi-s-chronos.dtb`, the DTB `boot.scr` loads; no
+overlays are applied).  GPIO phandles: `0x19` = gpio0, `0x85` = gpio2.
+Pin index n maps to `GPIOb_` + `ABCD`[n / 8] + n % 8.
+
+| Function | Pin / bus | Flags | DTS line |
+|---|---|---|---|
+| PPS (`pps-gpio`) | GPIO2_B6 | active high, pull none | 2834 (`pps`), 2621 (`pps-pins`) |
+| GPS UART (`ttyS1`, uart1 `ff0b0000`) | GPIO1_D1, GPIO1_D0 | pull up | 555, 1970 |
+| Console (`ttyS0`, uart0 `ff0a0000`) | GPIO2_A1, GPIO2_A0 | pull up | 539, 1947 |
+| User UART (`ttyS2`, uart2m0 `ff0c0000`) | GPIO1_C7, GPIO1_C6 | pull up | 571, 1988 |
+| RTC | `haoyu,hym8563`, I2C1 (`ff050000`) 0x51, IRQ GPIO0_C1 level low | | 441, 2613 |
+| EEPROM | `st,24c64`, I2C1 0x54 | | 455 |
+| LED `green:power` (module) | GPIO0_A6 | trigger heartbeat | 2798 |
+| LED `blue:sd` (module) | GPIO0_A5 | trigger mmc0 | 2805 |
+| LED `green:system` | GPIO2_A7 | trigger timer | 2812 |
+| LED `green:sd` | GPIO2_A5 | trigger mmc0 | 2819 |
+| LED `green:ntp` | GPIO2_B5 | trigger none | 2826 |
+| Front-panel button `fp-button-1` | GPIO2_B1 | gpio-export input | 2760 |
+| `hdr-ppsout-en` | GPIO2_A4 | gpio-export output, low | 2765 |
+| `gps-nreset` | GPIO2_B7 | gpio-export output, high | 2776 |
+| `gps-reset` | GPIO2_C0 | gpio-export output, low | 2782 |
+| `poe-sense` | GPIO2_B2 | gpio-export input | 2788 |
+| `barrel-mech` | GPIO0_B7 | gpio-export input | 2771 |
+| Ethernet (`ff4e0000`) | RMII, MAC clock output, PHY reset GPIO0_A7 active low | | 1294 |
+
+- `gpio-export` is a Rockchip vendor binding; mainline has none.
+- `boot/rockchip/overlays/chronos.dtbo` (`stock/chronos-overlay.dts`)
+  names LEDs `chronos:green:{system,ntp,disk}`; `boot.scr` does not
+  load it.
 
 ## Stock time services
 

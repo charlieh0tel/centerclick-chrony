@@ -1,0 +1,164 @@
+/dts-v1/;
+
+/ {
+	compatible = "rockchip,rk3308";
+
+	fragment@0 {
+		target-path = "/gpio-leds/";
+
+		__overlay__ {
+
+			green-led {
+				linux,default-trigger = "heartbeat";
+			};
+
+			blue-led {
+				linux,default-trigger = "mmc0";
+				default-state = "off";
+			};
+
+			led-system {
+				label = "chronos:green:system";
+				gpios = <0xffffffff 0x07 0x00>;
+				linux,default-trigger = "timer";
+				default-state = "off";
+			};
+
+			led-disk {
+				label = "chronos:green:disk";
+				gpios = <0xffffffff 0x05 0x00>;
+				linux,default-trigger = "mmc0";
+				default-state = "off";
+			};
+
+			led-ntp {
+				label = "chronos:green:ntp";
+				gpios = <0xffffffff 0x0d 0x00>;
+				linux,default-trigger = "none";
+				default-state = "off";
+			};
+		};
+	};
+
+	fragment@1 {
+		target-path = "/wireless-bluetooth/";
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@2 {
+		target-path = "/wireless-wlan/";
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@3 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@4 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@5 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@6 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	fragment@9 {
+		target-path = "/";
+
+		__overlay__ {
+
+			pps {
+				compatible = "pps-gpio";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x01>;
+				gpios = <0xffffffff 0x0e 0x00>;
+				status = "okay";
+				phandle = <0x02>;
+			};
+		};
+	};
+
+	fragment@10 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+
+			pps_pins {
+				rockchip,pins = <0x0e>;
+				rockchip,function = <0x00>;
+				rockchip,pull = <0x00>;
+				phandle = <0x01>;
+			};
+		};
+	};
+
+	fragment@12 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	fragment@13 {
+		target = <0xffffffff>;
+
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	__symbols__ {
+		pps = "/fragment@9/__overlay__/pps";
+		pps_pins = "/fragment@10/__overlay__/pps_pins";
+	};
+
+	__fixups__ {
+		gpio2 = "/fragment@0/__overlay__/led-system:gpios:0", "/fragment@0/__overlay__/led-disk:gpios:0", "/fragment@0/__overlay__/led-ntp:gpios:0", "/fragment@9/__overlay__/pps:gpios:0", "/fragment@10:target:0";
+		sdio = "/fragment@3:target:0";
+		i2s_8ch_2 = "/fragment@4:target:0";
+		acodec = "/fragment@5:target:0";
+		saradc = "/fragment@6:target:0";
+		rng = "/fragment@12:target:0";
+		uart4 = "/fragment@13:target:0";
+	};
+
+	__local_fixups__ {
+
+		fragment@9 {
+
+			__overlay__ {
+
+				pps {
+					pinctrl-0 = <0x00>;
+				};
+			};
+		};
+	};
+};
