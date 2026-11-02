@@ -142,6 +142,7 @@ stage_kernel() {
     local kmake=(make -C "$src" ARCH=arm64 CROSS_COMPILE="$CROSS" -j"$JOBS")
     log "linux $LINUX_VERSION"
     unpack "$DL/${LINUX_URL##*/}" "$src"
+    apply_patches linux "$src"
     cp "$ROOT/dts/rk3308-ntp250.dts" "$src/arch/arm64/boot/dts/rockchip/"
     # shellcheck disable=SC2016 # Make syntax, written literally.
     echo 'dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3308-ntp250.dtb' \

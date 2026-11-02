@@ -190,6 +190,16 @@ chronymon NTP samples of chronos, medians), 2026-11-02:
   patch (`riwt_off` is set only by the socfpga and mediatek glue in
   6.18; no DT property).  Not done.
 
+## Temperature
+
+| Item | Value | Source |
+|---|---|---|
+| Sensor | RK3308 TSADC, ch0 `logic-thermal` (`thermal_zone0`), ch1 `cpu-thermal` (`thermal_zone1`), millidegrees C | stock DTB `tsadc@ff1f0000`, `thermal-zones` |
+| Stock use | `cc_monitor` reads `thermal_zone0` for display; no board thermistor on Chronos; NTPsec had no compensation | `stock/extracted/rootfs/usr/sbin/cc_monitor` |
+| Mainline | no TSADC node in `rk3308.dtsi`, no `rockchip,rk3308-tsadc` match; added by `image/patches/linux/` (RK3328 data, 2 channels, as the Rockchip vendor driver) and `dts/rk3308-ntp250.dts` | Linux 6.18 |
+| Shutdown | hardware TSHUT via CRU at 120 C; critical trips 115 C | stock DTB |
+| Noise | 0.45 C step, 0.55 C sd per reading (90 readings at 1 s, idle) | measured 2026-11-02 |
+
 ## MAC address
 
 `ce:e9:6b:89:b0:4e`, set by U-Boot from the RK3308 CPU ID
@@ -220,6 +230,7 @@ Checked against Linux, U-Boot and TF-A `master` on 2026-11-01.
 | RTC | `rtc-hym8563.c`, compatible `haoyu,hym8563`; no node in board DTS | Linux |
 | PPS | generic `pps-gpio`; no node in board DTS | Linux |
 | LEDs, button | generic `gpio-leds`, `gpio-keys`; board DTS has only module LEDs GPIO0_A6, GPIO0_A5 | Linux |
+| TSADC | `rockchip_thermal.c` has no RK3308 entry; no node in `rk3308.dtsi` | Linux |
 | GPS reset, PPS out enable, PoE sense, barrel | no `gpio-export` binding; use `gpio-hog` or `gpio-line-names` | Linux |
 
 Stock bootloader: Rockchip miniloader with DDR blob "DDR Version V1.26"

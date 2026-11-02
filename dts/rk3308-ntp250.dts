@@ -59,6 +59,58 @@
 		pinctrl-0 = <&pps_pin>;
 		gpios = <&gpio2 RK_PB6 GPIO_ACTIVE_HIGH>;
 	};
+
+	/*
+	 * SoC temperature, as in the stock DTB: channel 0 logic, channel 1
+	 * CPU.  Upstream rk3308.dtsi has no TSADC; the driver match comes
+	 * from image/patches/linux.
+	 */
+	thermal-zones {
+		logic-thermal {
+			polling-delay-passive = <0>;
+			polling-delay = <1000>;
+			thermal-sensors = <&tsadc 0>;
+
+			trips {
+				logic-crit {
+					temperature = <115000>;
+					hysteresis = <2000>;
+					type = "critical";
+				};
+			};
+		};
+
+		cpu-thermal {
+			polling-delay-passive = <0>;
+			polling-delay = <1000>;
+			thermal-sensors = <&tsadc 1>;
+
+			trips {
+				cpu-crit {
+					temperature = <115000>;
+					hysteresis = <2000>;
+					type = "critical";
+				};
+			};
+		};
+	};
+
+	/* Hardware shutdown via CRU reset at 120 C (stock values); TSHUT pin unused. */
+	tsadc: tsadc@ff1f0000 {
+		compatible = "rockchip,rk3308-tsadc";
+		reg = <0x0 0xff1f0000 0x0 0x100>;
+		interrupts = <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>;
+		assigned-clocks = <&cru SCLK_TSADC>;
+		assigned-clock-rates = <50000>;
+		clocks = <&cru SCLK_TSADC>, <&cru PCLK_TSADC>;
+		clock-names = "tsadc", "apb_pclk";
+		resets = <&cru SRST_TSADC>;
+		reset-names = "tsadc-apb";
+		rockchip,hw-tshut-mode = <0>;
+		rockchip,hw-tshut-polarity = <1>;
+		rockchip,hw-tshut-temp = <120000>;
+		#thermal-sensor-cells = <1>;
+	};
 };
 
 /*
