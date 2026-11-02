@@ -14,7 +14,7 @@ Boot a self-built Linux image from microSD on the CenterClick NTP250 and run chr
 | RAM | 512 MiB |
 | Boot media | microSD, stock card is a Gigastone 8 GB |
 | GPS | u-blox MAX-M8Q, active 3.3 V antenna; GPS I2C also wired to the CPU |
-| Console | micro-USB via CH340N; stock kernel console is `ttyS0` at 1500000 8N1 (CH340N wiring unconfirmed) |
+| Console | micro-USB via CH340N, probably `ttyS2` (stock admin CLI, 115200 8N1); kernel console is `ttyS0` at 1500000 8N1 |
 | Ethernet | 10/100 |
 | Power | PoE (in use) or 7-11 V DC on this rev |
 | RTC + GPS backup | Supercap, about 3 h holdover |
@@ -122,7 +122,7 @@ Then:
 ## Phase 3: Bring-up (workstation + NTP250)
 
 1. Human: write `out/ntp250.img` to the blank card, after confirming the device per Safety rule 1.
-2. Human: insert the card and power up on PoE, with the workstation console attached at 1500000 8N1.
+2. Human: insert the card and power up on PoE, with the workstation attached to the kernel console (`ttyS0`, 1500000 8N1).
 3. Capture the boot log to `validate/boot-*.log`.
 4. Check on the NTP250 (console or SSH):
    - `ip link`: Ethernet comes up at 100 Mb/s

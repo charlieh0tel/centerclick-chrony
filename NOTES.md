@@ -118,3 +118,12 @@ Checked against Linux, U-Boot and TF-A `master` on 2026-11-01.
 
 Stock bootloader: Rockchip miniloader with DDR blob "DDR Version V1.26"
 (`idbloader.img`), vendor BL31 (`trust.img`).
+
+## Stock serial consoles
+
+| UART | Use | Speed | Source |
+|---|---|---|---|
+| `ttyS0` (uart0) | kernel and U-Boot console | 1500000 8N1 | `boot.scr` bootargs |
+| `ttyS2` (`/dev/serial/user`) | "...Booting" message, then `agetty` login to the admin CLI | 115200 | `rootfs/usr/lib/systemd/system/cc-bootmsg*.service`, `rootfs/usr/sbin/cc_console_service` |
+
+- Which UART the micro-USB CH340N carries is unconfirmed.
