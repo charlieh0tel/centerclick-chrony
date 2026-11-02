@@ -22,7 +22,7 @@ Boot a self-built Linux image from microSD on the CenterClick NTP250 and run chr
 
 ## Unknowns to resolve (Phase 1)
 
-- Exact SoC and compute-module part (read the silkscreen)
+- Exact SoC and compute-module part (from the stock DTB)
 - GPS UART controller and pins
 - PPS GPIO
 - RTC part and I2C bus
@@ -34,7 +34,7 @@ Boot a self-built Linux image from microSD on the CenterClick NTP250 and run chr
 
 - **Workstation**: the Linux box with the microSD reader, where Claude Code runs. All build, inspection and imaging happens here.
 - **NTP250**: the target. Reach it via its USB console (from the workstation, e.g. `/dev/ttyUSB0`) and via SSH once our image boots.
-- **Human-only steps** (Claude Code must stop and ask): powering the unit off and on, opening the case, moving the microSD card, and reading the silkscreen.
+- **Human-only steps** (Claude Code must stop and ask): powering the unit off and on, opening the case, and moving the microSD card.
 
 ## Safety rules
 
@@ -87,7 +87,6 @@ Work only on the image file. The physical card is no longer needed and can go ba
    - any `/sys/class/pps` usage
    - kernel version (`strings` on the kernel image)
 7. Extract U-Boot version strings from the raw area.
-8. Human: report the compute-module silkscreen and any part markings near the GPS and RTC.
 
 **Done when** NOTES.md contains a complete pin map: GPS TX/RX, PPS GPIO, RTC bus and address, LEDs, button, Ethernet PHY. Each item cites the DTS line or rootfs file it came from.
 
