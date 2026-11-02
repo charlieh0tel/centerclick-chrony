@@ -157,7 +157,7 @@ stage_kernel() {
     # Debian has merged /usr: modules go under /usr/lib/modules.
     "${kmake[@]}" modules_install INSTALL_MOD_PATH="$staging/usr" \
         INSTALL_MOD_STRIP=1
-    tar -C "$staging" --owner=0 --group=0 -cf "$BUILD/kernel.tar" boot usr
+    tar -C "$staging" --owner=0 --group=0 --mode=go-w -cf "$BUILD/kernel.tar" boot usr
 }
 
 stage_rootfs() {
