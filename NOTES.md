@@ -1,4 +1,28 @@
-# NOTES: NTP250 findings
+# NOTES
+
+Findings log. Each entry cites its source.
+
+## Unit
+- NTP250, HW rev 10, SN 203, stock software 2.26.4 [7a7171e]. Source: web UI System Info.
+- Stock card: Gigastone HE 8 GB (7431 MiB). Source: web UI.
+
+## Compute module (photos in `photos/`)
+- Radxa ROCK Pi S V1.3, silkscreen date 20190910.
+- SoC: Rockchip RK3308 (marking HAAKT35005 2052).
+- RAM: TMTC TN4G16D3CSEP-EK (4 Gb DDR3 = 512 MiB).
+- Realtek Wi-Fi/BT QFN with IPEX connector, unused.
+- Plugs into the base board; removable.
+
+## Base board "CHRONOS V10" (photos in `photos/`)
+- U3: u-blox MAX-M8Q-0-10.
+- U2: NXP PCF8563 RTC (stock DTB uses compatible `haoyu,hym8563`), Y1 32.768 kHz, C15 supercap backup.
+- U4: CH340N, micro-USB "Console", 115200 8N1.
+- Header "UART0" (TX/RX/GND) near R25/R26. Presumed wired to ROCK Pi S
+  header pins 8/10 (UART0, kernel console); unverified.
+- J6: 26-pin socket for the ROCK Pi S. J5, J7: 4-pin sockets picking up other module pins.
+- J4: DC / VIN / G / 5V / 3V3 / G / Pu to the PSU board.
+- SW1: front button. D10: LEDs.
+- PSU board: DC barrel (7-14 V marking) + PoE daughter board.
 
 ## Stock image
 
@@ -38,9 +62,9 @@ partition 1.  GPT; 512-byte sectors.
 
 | Item | Value | Source |
 |---|---|---|
-| Compute module | Radxa ROCK Pi S (`radxa,rockpis`), stock board by visual inspection | `boot/rk3308-rock-pi-s-chronos.dtb`, human |
+| Compute module | Radxa ROCK Pi S V1.3 (`radxa,rockpis`) | DTB, silkscreen (`photos/`) |
 | Board model string | "Radxa ROCK Pi S On Chronos Carrier" | same DTB |
-| SoC | RK3308 | DTB name, `boot.scr` |
+| SoC | RK3308 (not RK3308B) | DTB, package marking (`photos/`) |
 | U-Boot | 2017.09 (Rockchip vendor) | `strings uboot.img` |
 | Kernel | 4.4.247 (Rockchip vendor), Buildroot 2023.02.11 toolchain | `zcat boot/Image.gz \| strings` |
 | Rootfs | Buildroot 2023.02.11, squashfs, gzip | `rootfs/etc/os-release` |
@@ -59,32 +83,37 @@ Source: `boot/boot.scr`.
 
 ## Pin map
 
-Source: `stock/ntp250.dts` (decompiled from
+Sources: `stock/ntp250.dts` (decompiled from
 `boot/rk3308-rock-pi-s-chronos.dtb`, the DTB `boot.scr` loads; no
-overlays are applied).  GPIO phandles: `0x19` = gpio0, `0x85` = gpio2.
-Pin index n maps to `GPIOb_` + `ABCD`[n / 8] + n % 8.
+overlays are applied); module header pins from Radxa
+`docs.radxa.com/en/rockpi/rockpis/hardware/pin-gpio` (header 1 is pins
+1-26, header 2 is pins 27-52).  GPIO phandles: `0x19` = gpio0,
+`0x85` = gpio2.  Pin index n maps to `GPIOb_` + `ABCD`[n / 8] + n % 8.
 
-| Function | Pin / bus | Flags | DTS line |
-|---|---|---|---|
-| PPS (`pps-gpio`) | GPIO2_B6 | active high, pull none | 2834 (`pps`), 2621 (`pps-pins`) |
-| GPS UART (`ttyS1`, uart1 `ff0b0000`) | GPIO1_D1, GPIO1_D0 | pull up | 555, 1970 |
-| Console (`ttyS0`, uart0 `ff0a0000`) | GPIO2_A1, GPIO2_A0 | pull up | 539, 1947 |
-| User UART (`ttyS2`, uart2m0 `ff0c0000`) | GPIO1_C7, GPIO1_C6 | pull up | 571, 1988 |
-| RTC | `haoyu,hym8563`, I2C1 (`ff050000`) 0x51, IRQ GPIO0_C1 level low | | 441, 2613 |
-| EEPROM | `st,24c64`, I2C1 0x54 | | 455 |
-| LED `green:power` (module) | GPIO0_A6 | trigger heartbeat | 2798 |
-| LED `blue:sd` (module) | GPIO0_A5 | trigger mmc0 | 2805 |
-| LED `green:system` | GPIO2_A7 | trigger timer | 2812 |
-| LED `green:sd` | GPIO2_A5 | trigger mmc0 | 2819 |
-| LED `green:ntp` | GPIO2_B5 | trigger none | 2826 |
-| Front-panel button `fp-button-1` | GPIO2_B1 | gpio-export input | 2760 |
-| `hdr-ppsout-en` | GPIO2_A4 | gpio-export output, low | 2765 |
-| `gps-nreset` | GPIO2_B7 | gpio-export output, high | 2776 |
-| `gps-reset` | GPIO2_C0 | gpio-export output, low | 2782 |
-| `poe-sense` | GPIO2_B2 | gpio-export input | 2788 |
-| `barrel-mech` | GPIO0_B7 | gpio-export input | 2771 |
-| Ethernet (`ff4e0000`) | RMII, MAC clock output, PHY reset GPIO0_A7 active low | | 1294 |
+| Function | RK3308 pin / bus | Module pin | Flags | DTS line |
+|---|---|---|---|---|
+| GPS UART (`ttyS1`, uart1 `ff0b0000`) | GPIO1_D0 RX, GPIO1_D1 TX | 23, 24 | pull up | 555, 1970 |
+| PPS (`pps-gpio`) | GPIO2_B6 | 30 | active high, pull none | 2834, 2621 |
+| Kernel console (`ttyS0`, uart0 `ff0a0000`) | GPIO2_A0 RX, GPIO2_A1 TX | 10, 8 | pull up | 539, 1947 |
+| Admin CLI / CH340N (`ttyS2`, uart2m0 `ff0c0000`) | GPIO1_C6 RX, GPIO1_C7 TX | 21, 19 | pull up | 571, 1988 |
+| RTC | I2C1 (`ff050000`) 0x51, SDA GPIO0_B3, SCL GPIO0_B4 | 3, 5 | | 427, 441 |
+| RTC IRQ | GPIO0_C1 | 15 | level low | 2613 |
+| EEPROM `st,24c64` | I2C1 0x54 | 3, 5 | | 455 |
+| GPS I2C | not in DTB; I2C0, I2C2, I2C3 disabled | | | 413, 463, 477 |
+| LED `green:power` (module) | GPIO0_A6 | on module | trigger heartbeat | 2798 |
+| LED `blue:sd` (module) | GPIO0_A5 | on module | trigger mmc0 | 2805 |
+| LED `green:system` | GPIO2_A7 | 22 | trigger timer | 2812 |
+| LED `green:sd` | GPIO2_A5 | 12 | trigger mmc0 | 2819 |
+| LED `green:ntp` | GPIO2_B5 | 28 | trigger none | 2826 |
+| Button SW1 `fp-button-1` | GPIO2_B1 | 18 | gpio-export input | 2760 |
+| `hdr-ppsout-en` | GPIO2_A4 | 7 | gpio-export output, low | 2765 |
+| `gps-nreset` | GPIO2_B7 | 32 | gpio-export output, high | 2776 |
+| `gps-reset` | GPIO2_C0 | 34 | gpio-export output, low | 2782 |
+| `poe-sense` | GPIO2_B2 | 16 | gpio-export input | 2788 |
+| `barrel-mech` | GPIO0_B7 | 11 | gpio-export input | 2771 |
+| Ethernet (`ff4e0000`) | RMII, MAC clock output, PHY reset GPIO0_A7 active low | on module | | 1294 |
 
+- RX/TX roles: Radxa pin table (UART0, UART1, UART2_M0).
 - `gpio-export` is a Rockchip vendor binding; mainline has none.
 - `boot/rockchip/overlays/chronos.dtbo` (`stock/chronos-overlay.dts`)
   names LEDs `chronos:green:{system,ntp,disk}`; `boot.scr` does not
@@ -139,3 +168,8 @@ Source: `rockchip-linux/rkbin` `master`, `RKBOOT/RK3308MINIALL.ini` and
   `uart4_m0` only (this board uses uart0 for console, uart2_m0 for the
   admin CLI).
 - BL31 `rk3308_bl31_v2.28.elf`.
+
+## Open questions
+
+- Confirm mainline `rk3308-rock-pi-s.dts` covers V1.3.
+- Confirm base-board "UART0" header carries module pins 8/10.
