@@ -1,0 +1,131 @@
+
+  ...Booting
+  ...Checking Storage
+  ...checking flash: Gigastone HE 8GB #1 7431MiB
+  ...Checking RTC: [Sun Jan  1 12:00:06 2017] WRONG
+  ...Will step clock...
+  ...waiting for online
+  ...waiting for DNS
+  ...Attempting clock step with: us.pool.ntp.org 
+ 2 Jan 00:00:04 ntpdate[362]: ntpdate 4.2.8p15@1.3728-o Tue Sep  8 18:11:32 UTC 2026 (1)
+ 2 Nov 03:33:08 ntpdate[362]: step time server 204.57.30.245 offset +215667174.734980 sec
+  ...Setting RTC: [Mon Nov  2 03:33:08 2026]
+  ...NTP250 SN 203 HW v10 SW v2.26.4
+Enabling SSH...
+Enabling HTTP...
+
+
+chronos login: root
+Password: 
+login:аю
+
+chronos login: root    admin
+Password: 
+Login incorrect
+chronos login: admin
+Password: 
+
+chronos> ?
+NTP250 documentation at https://centerclick.com
+Console Commands:
+  help                     This Help
+  show config              Show entire configuration
+  show info                System Info
+  show acls ntp            NTP Access Control
+  show acls ssh            SSH Access Control
+  show acls http           HTTP Access Control
+  show acls snmp           SNMP Access Control
+  show ntp                 NTP Status
+  show ntp peers           NTP Peers
+  show ntp stats           NTP Statistics
+  show ntp clients         NTP Clients
+  show ntp bcast           NTP Broadcast/Multicast
+  show ntp backup          NTP Backup Servers/Pools
+  show gnss                GNSS Status
+  show network             Network Status
+  show services            Show Services
+  show localization        Show Timezone, Units and Hostname
+  conf acls ntp            Configure NTP Access Control
+  conf acls ssh            Configure SSH Access Control
+  conf acls http           Configure HTTP Access Control
+  conf acls snmp           Configure SNMP Access Control
+  conf network             Configure Network
+  conf services            Configure Services
+  conf ntp bcast           Configure NTP Broadcast/Multicast
+  conf ntp backup          Configure NTP Backup Servers/Pools
+  conf localization        Configure Timezone, Units, and Hostname
+  conf gnss                Configure GNSS
+  stream nmea              Show live GNSS NMEA data
+  stream json              Show live GNSS JSON data
+  stream ntp               Show live NTP packet data
+  ping [-4|-6] host        Ping a host with ICMPs
+  traceroute [-4|-6] host  Traceroute to a host
+  ntppool validate {-4|-6} Complete a NTP Pool validation
+  reboot [hard]            Reboot
+  shutdown                 Shutdown
+  no conf                  Reset settings to defaults [reboots]
+  upgrade [URL]            Upgrade software
+  exit                     Logout
+chronos> show info
+Model:         NTP250
+HW Rev:        10
+SN:            203
+Software       Running: 2.26.4 [7a7171e], Latest: unknown
+Help:          https://centerclick.com
+DC Power:      12.04
+PoE Power:     no-power
+Power:         good
+CPU Temp:      98.27 f
+Temperature:   good
+Memory:        108.55 / 512 MiB
+Flash:         Gigastone HE 8GB #1 - 7431 MiB - check-pending
+CPU:           12.60%
+Uptime:        0 min
+chronos> show config
+# SKU NTP250 SN 203 SWVER 2.26.4
+# WARNING: 'show config' is experimental in this software release
+conf network
+  ip4 static 10.0.0.239/16 10.0.0.254
+  ip6 auto
+  exit
+conf services
+  http
+  no https
+  no location privacy
+  client dns
+  no snmp
+  auto upgrade install
+  admin password
+    # password...
+  no admin authkeys
+  exit
+conf acls ntp
+  S 0.0.0.0/0
+  S ::/0
+  exit
+conf acls ssh
+  accept 0.0.0.0/0
+  accept ::/0
+  exit
+conf acls http
+  accept 0.0.0.0/0
+  accept ::/0
+  exit
+conf ntp bcast
+  exit
+conf ntp backup
+  pool us.pool.ntp.org
+  exit
+conf localization
+  no timezone
+  units feet
+  units fahrenheit
+  hostname chronos
+  exit
+conf gnss
+  sat gps
+  sat galileo
+  sat glonass
+  no sat beidou
+  exit
+chronos> 
