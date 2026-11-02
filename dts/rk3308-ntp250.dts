@@ -1,0 +1,126 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * CenterClick NTP250 rev 10: Radxa ROCK Pi S V1.3 on the CHRONOS V10
+ * carrier.  Pin sources: NOTES.md "Pin map" (stock DTB
+ * rk3308-rock-pi-s-chronos.dtb).
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/input/input.h>
+#include "rk3308-rock-pi-s.dts"
+
+/ {
+	model = "CenterClick NTP250 (Radxa ROCK Pi S)";
+	compatible = "centerclick,ntp250", "radxa,rockpis", "rockchip,rk3308";
+
+	aliases {
+		rtc0 = &pcf8563;
+	};
+
+	carrier-leds {
+		compatible = "gpio-leds";
+
+		led-system {
+			label = "ntp250:green:system";
+			gpios = <&gpio2 RK_PA7 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+		};
+
+		led-sd {
+			label = "ntp250:green:sd";
+			gpios = <&gpio2 RK_PA5 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "mmc1";
+		};
+
+		led-ntp {
+			label = "ntp250:green:ntp";
+			gpios = <&gpio2 RK_PB5 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		/* Polarity unverified; the stock DTB exports it as a plain input. */
+		button-front {
+			label = "front";
+			linux,code = <KEY_PROG1>;
+			gpios = <&gpio2 RK_PB1 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	pps {
+		compatible = "pps-gpio";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pps_pin>;
+		gpios = <&gpio2 RK_PB6 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+/* Output levels as the stock DTB's gpio-export nodes set them. */
+&gpio2 {
+	hdr-ppsout-en-hog {
+		gpio-hog;
+		gpios = <RK_PA4 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "hdr-ppsout-en";
+	};
+
+	gps-nreset-hog {
+		gpio-hog;
+		gpios = <RK_PB7 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "gps-nreset";
+	};
+
+	gps-reset-hog {
+		gpio-hog;
+		gpios = <RK_PC0 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "gps-reset";
+	};
+};
+
+&i2c1 {
+	pcf8563: rtc@51 {
+		compatible = "nxp,pcf8563";
+		reg = <0x51>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rtc_int>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <RK_PC1 IRQ_TYPE_LEVEL_LOW>;
+		#clock-cells = <0>;
+	};
+
+	eeprom@54 {
+		compatible = "atmel,24c64";
+		reg = <0x54>;
+		pagesize = <32>;
+		read-only;
+	};
+};
+
+&pinctrl {
+	ntp250 {
+		pps_pin: pps-pin {
+			rockchip,pins = <2 RK_PB6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		rtc_int: rtc-int {
+			rockchip,pins = <0 RK_PC1 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+};
+
+/* GPS.  TX/RX only: uart1's RTS/CTS pins are uart2m0 (CH340N console). */
+&uart1 {
+	pinctrl-0 = <&uart1_xfer>;
+	status = "okay";
+};
+
+/* CH340N, carrier micro-USB "Console". */
+&uart2 {
+	status = "okay";
+};
