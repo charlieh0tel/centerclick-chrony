@@ -10,11 +10,11 @@ Boot a self-built Linux image from microSD on the CenterClick NTP250 and run chr
 |---|---|
 | Model / HW rev / SN | NTP250, rev 10, SN 203 |
 | Stock software | 2.26.4 [7a7171e] |
-| SoC | Rockchip RK33-series (probably RK3308; **unconfirmed**) on a yellow compute module |
+| SoC | Rockchip RK3308 on a Radxa ROCK Pi S compute module (see NOTES.md) |
 | RAM | 512 MiB |
 | Boot media | microSD, stock card is a Gigastone 8 GB |
 | GPS | u-blox MAX-M8Q, active 3.3 V antenna; GPS I2C also wired to the CPU |
-| Console | micro-USB via CH340N, 115200 8N1 |
+| Console | micro-USB via CH340N; stock kernel console is `ttyS0` at 1500000 8N1 (CH340N wiring unconfirmed) |
 | Ethernet | 10/100 |
 | Power | PoE (in use) or 7-11 V DC on this rev |
 | RTC + GPS backup | Supercap, about 3 h holdover |
@@ -46,7 +46,7 @@ Boot a self-built Linux image from microSD on the CenterClick NTP250 and run chr
 ## Repo layout
 
 ```
-ntp250/
+centerclick-chrony/
   PLAN.md
   NOTES.md            # findings log: pin map, part numbers, decisions
   stock/              # backup image (gitignored), extracted dts, file listings
@@ -61,9 +61,9 @@ ntp250/
 Human: shut down the NTP250, open the case, remove the microSD and insert it into the workstation reader.
 
 1. Identify the device with `lsblk -o NAME,SIZE,MODEL,SERIAL`, then confirm it with the human.
-2. Image it: `sudo dd if=/dev/sdX of=stock/ntp250-sn203-2.26.4.img bs=4M status=progress conv=fsync`
-3. Record the checksum: `sha256sum stock/*.img > stock/SHA256SUMS`
-4. `chmod a-w stock/*.img`
+2. Image it: `sudo dd if=/dev/sdX of=stock/centerclick-ntp250.dd bs=4M status=progress conv=fsync`
+3. Record the checksum: `sha256sum stock/centerclick-ntp250.dd > stock/SHA256SUMS`
+4. `chmod a-w stock/centerclick-ntp250.dd`
 
 **Done when:** the image exists, its checksum is recorded, and its size matches the card.
 
@@ -123,7 +123,7 @@ Then:
 ## Phase 3: Bring-up (workstation + NTP250)
 
 1. Human: write `out/ntp250.img` to the blank card, after confirming the device per Safety rule 1.
-2. Human: insert the card and power up on PoE, with the workstation console attached at 115200 8N1.
+2. Human: insert the card and power up on PoE, with the workstation console attached at 1500000 8N1.
 3. Capture the boot log to `validate/boot-*.log`.
 4. Check on the NTP250 (console or SSH):
    - `ip link`: Ethernet comes up at 100 Mb/s

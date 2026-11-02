@@ -4,17 +4,35 @@
 
 | File | What | Source |
 |---|---|---|
-| `stock/centerclick-ntp250.dd` | ext4 partition image, 4 GiB, last mounted on `/data`; not a whole-card image | `file`, `dumpe2fs -h` |
+| `stock/centerclick-ntp250.dd` | whole stock card, 7791968256 bytes (gitignored) | `dd if=/dev/sdc` |
 | `stock/SHA256SUMS` | checksum of the above | `sha256sum` |
-| `stock/extracted/` | copy of `/backup2` from the image (gitignored) | `debugfs -c -R 'rdump /backup2 ...'` |
+| `stock/extracted/` | copy of `/backup2` from partition 4 (gitignored) | `debugfs -c -R 'rdump /backup2 ...'` |
 | `stock/extracted/rootfs/` | unpacked `rootfs.squashfs` (gitignored) | `unsquashfs` |
 | `stock/ntp250.dts` | decompiled `boot/rk3308-rock-pi-s-chronos.dtb` | `dtc -I dtb -O dts` |
 | `stock/chronos-overlay.dts` | decompiled `boot/rockchip/overlays/chronos.dtbo` | `dtc -I dtb -O dts` |
 
-- `/backup` and `/backup2` hold identical `idbloader.img`, `uboot.img`,
-  `trust.img`; `/backup2` also holds `rootfs.squashfs`.
-- Filesystem state: "needs journal recovery"; last write time
-  2026-11-01 18:06, two minutes before the image file was written.
+## Card layout
+
+Source: `gdisk -l`, `file`, and `sha256sum` against `/meta.sums` on
+partition 1.  GPT; 512-byte sectors.
+
+| Start sector | Size | Content | Matches |
+|---|---|---|---|
+| 64 | 130048 B | `idbloader.img` (Rockchip, encrypted header) | `meta.sums` |
+| 16384 | 1 MiB | `uboot.img` (`LOADER` header) | `meta.sums` |
+| 24576 | 1 MiB | `trust.img` (`BL3X` header) | `meta.sums` |
+| 32768 (p1, `boot`, EF00) | 112 MiB | ext4: `Image.gz`, `boot.scr`, DTB, `rootdev.txt`, `meta.size`, `meta.sums` | `meta.sums` |
+| 262144 (p2) | 448 MiB | rootfs squashfs, slot A | `meta.sums` |
+| 1179648 (p3) | 448 MiB | rootfs squashfs, slot B, identical to p2 | `meta.sums` |
+| 2097152 (p4) | 4 GiB | ext4 `/data`: config, `/backup`, `/backup2` | |
+
+- `rootdev.txt`: `rootdev=/dev/mmcblk0p2`.
+- `meta.sums` hashes `rootfs.squashfs` padded to 42991616 bytes.
+- `/backup` and `/backup2` on p4 hold the same `idbloader.img`,
+  `uboot.img`, `trust.img`; `/backup2` also holds `rootfs.squashfs`.
+  All match `meta.sums`.
+- p4 state: clean, last write 2020-01-01 16:00:02 (unit time before
+  sync).
 
 ## Platform
 
