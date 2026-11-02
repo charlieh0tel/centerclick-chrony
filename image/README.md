@@ -46,6 +46,7 @@ from a tarball).
 | GPS daemon | `gpsd -n -b -s 115200 /dev/ttyS1` (`/etc/default/gpsd`), after `ntp250-gps-config` |
 | chrony | `/etc/chrony/conf.d/ntp250.conf`: SHM 0 `NMEA` (noselect, offset uncalibrated), `/dev/pps0` `PPS` locked to NMEA, preferred; Debian pool as sanity sources; serves NTP to all |
 | Disabled | eMMC (not fitted), Wi-Fi (SDIO), Bluetooth (uart4) |
+| Timing tweaks | `ntp250-tuning.service`: cpuidle state1 off, `end0` IRQ on CPU3, `rx-usecs 164`; see `NOTES.md` "Timing tweaks" |
 
 ## Write to a card
 

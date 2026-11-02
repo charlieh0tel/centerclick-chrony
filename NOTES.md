@@ -156,6 +156,25 @@ Measured: NMEA offset +161 ms at 9600 with all default sentences, +33 ms
 at 115200 with GGA/RMC/ZDA; stratum 1 on PPS about 55 s after boot (warm
 start); first fix after power-up without valid time: about 13 min.
 
+## Timing tweaks
+
+Applied at boot by `ntp250-tuning.service`
+(`rootfs/overlay/usr/local/sbin/ntp250-tuning`), as the stock firmware
+did (`stock/extracted/rootfs/usr/sbin/cc_monitor:2202-2208`).
+
+| Tweak | Mainline default | Set | Reason |
+|---|---|---|---|
+| PSCI cpuidle state1 `cpu-sleep` | enabled, wake latency 370 us | disabled on CPUs 0-3 (WFI, 1 us, stays) | Interrupt latency for PPS and NTP packets |
+| `end0` IRQ affinity | CPUs 0-3 (all on CPU0) | CPU3 | Away from the PPS and GPS UART interrupts |
+| `end0` RX coalescing | `rx-usecs 819` | `rx-usecs 164` (reads back 163) | NTP request receive timestamps |
+
+Not ported: stock conntrack NOTRACK for UDP 123 (no firewall rules yet);
+ntpd's kernel PPS discipline (`flag3 1`) has no chrony equivalent.
+
+Preliminary effect (chrony `sourcestats`, PPS): std dev 585 ns (11
+samples) before, 418 ns (8 samples) 10 min after; package installs ran
+during the window.  The 24 h comparison belongs to Phase 5.
+
 ## MAC address
 
 `ce:e9:6b:89:b0:4e`, set by U-Boot from the RK3308 CPU ID
