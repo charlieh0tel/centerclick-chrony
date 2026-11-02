@@ -38,7 +38,7 @@ partition 1.  GPT; 512-byte sectors.
 
 | Item | Value | Source |
 |---|---|---|
-| Compute module | Radxa ROCK Pi S (`radxa,rockpis`) | `boot/rk3308-rock-pi-s-chronos.dtb` |
+| Compute module | Radxa ROCK Pi S (`radxa,rockpis`), stock board by visual inspection | `boot/rk3308-rock-pi-s-chronos.dtb`, human |
 | Board model string | "Radxa ROCK Pi S On Chronos Carrier" | same DTB |
 | SoC | RK3308 | DTB name, `boot.scr` |
 | U-Boot | 2017.09 (Rockchip vendor) | `strings uboot.img` |
