@@ -51,7 +51,7 @@ readonly PACKAGES=(
 
 # Host commands the stages need.
 readonly TOOLS=(
-    curl sha256sum tar make bison flex swig "${CROSS}gcc"
+    curl sha256sum tar patch make bison flex swig "${CROSS}gcc"
     mmdebstrap qemu-aarch64 mkfs.ext4 sgdisk dd truncate
 )
 
@@ -85,18 +85,29 @@ unpack() {
     tar -xf "$1" -C "$2" --strip-components=1
 }
 
+# apply_patches NAME DIR: apply image/patches/NAME/*.patch to DIR, in order.
+apply_patches() {
+    local patch
+    for patch in "$ROOT/image/patches/$1"/*.patch; do
+        [[ -e $patch ]] || continue
+        log "patch $1: ${patch##*/}"
+        patch -d "$2" -p1 --quiet --forward <"$patch"
+    done
+}
+
 stage_fetch() {
     mkdir -p "$DL"
     fetch "$LINUX_URL" "$LINUX_SHA256"
     fetch "$UBOOT_URL" "$UBOOT_SHA256"
-    fetch "$RKBIN_URL/$RKBIN_DDR" "$RKBIN_DDR_SHA256"
-    fetch "$RKBIN_URL/$RKBIN_BL31" "$RKBIN_BL31_SHA256"
+    fetch "$RKBIN_BASE/$RKBIN_DDR_COMMIT/bin/rk33/$RKBIN_DDR" "$RKBIN_DDR_SHA256"
+    fetch "$RKBIN_BASE/$RKBIN_BL31_COMMIT/bin/rk33/$RKBIN_BL31" "$RKBIN_BL31_SHA256"
 }
 
 stage_uboot() {
     local src=$BUILD/u-boot
     log "u-boot $UBOOT_VERSION"
     unpack "$DL/${UBOOT_URL##*/}" "$src"
+    apply_patches u-boot "$src"
     make -C "$src" CROSS_COMPILE="$CROSS" "$UBOOT_DEFCONFIG"
     make -C "$src" CROSS_COMPILE="$CROSS" -j"$JOBS" \
         BL31="$DL/$RKBIN_BL31" ROCKCHIP_TPL="$DL/$RKBIN_DDR"

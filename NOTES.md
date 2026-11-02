@@ -175,16 +175,41 @@ Stock bootloader: Rockchip miniloader with DDR blob "DDR Version V1.26"
 
 ## rkbin RK3308 binaries
 
-Source: `rockchip-linux/rkbin` `master`, `RKBOOT/RK3308MINIALL.ini` and
-`bin/rk33/`, 2026-11-01.
+Source: `rockchip-linux/rkbin`, `bin/rk33/`, `RKBOOT/RK3308MINIALL.ini`,
+`tools/ddrbin_tool_user_guide.txt`, 2026-11-01.
 
-- One RK3308 set; no RK3308B-specific files.
-- DDR init v2.11 at 393, 451 or 589 MHz, debug UART `uart2_m1` or
-  `uart4_m0` only (this board uses uart0 for console, uart2_m0 for the
-  admin CLI).
-- BL31 `rk3308_bl31_v2.28.elf`.
+- DDR init v2.x (v2.05 and later) does not run on the RK3308(A): v2.11
+  contains the string "RK3308A is not supported by this DDR bin
+  version!"; with it the board drops to USB maskrom (`2207:330e`).
+- Last v1.x: v1.31 (commit `6bd18410a21d`, `uart2_m1`/`uart4_m0` only);
+  removed in `38956aae52a2` ("update ddr bin to v2.05 to support
+  RK3308B-S").  Boots this board, but leaves uart0 on DPLL/16
+  (81.25 MHz); U-Boot assumes 24 MHz, so U-Boot output is garbled.
+- In use: `rk3308_ddr_589MHz_uart0_m0_v1.26.bin` (commit `491dafd997ed`),
+  the stock version.  Prints on uart0 and leaves uart0 at 24 MHz; full
+  boot log readable (DDR3, 512 MB, 589 MHz).
+- BL31 `rk3308_bl31_v2.28.elf` (`master`) runs on the RK3308(A).
+
+## I/O voltage domains
+
+Source: GRF `SOC_CON0` (0xff000300) read on the running board; stock
+DTB `io-domains` node.
+
+| Domain | Stock DTB | Upstream `rk3308-rock-pi-s.dts` |
+|---|---|---|
+| vccio0, vccio1, vccio5 | 3.3 V | 3.3 V |
+| vccio2 | 1.8 V | 3.3 V |
+| vccio3 | 1.8 V (`vccio_flash`) | 3.3 V |
+| vccio4 | 1.8 V | 1.8 V |
+
+- With vccio2 in 3.3 V mode, UART0 TX (module header 1 pin 8) is silent;
+  setting GRF `SOC_CON0` bit 2 (1.8 V) brings it back.
+- `dts/rk3308-ntp250.dts` and the U-Boot patch
+  `image/patches/u-boot/0001-rock-pi-s-vccio2-vccio3-1v8.patch` set
+  vccio2 and vccio3 to 1.8 V.
 
 ## Open questions
 
-- Confirm mainline `rk3308-rock-pi-s.dts` covers V1.3.
+- Mainline `rk3308-rock-pi-s.dts` vccio2/vccio3 at 3.3 V: wrong for
+  V1.3, or for all revisions?
 - Why the base-board "UART0" header shows no output.

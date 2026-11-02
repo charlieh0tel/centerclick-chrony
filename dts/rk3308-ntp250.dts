@@ -83,6 +83,16 @@
 	};
 };
 
+/*
+ * ROCK Pi S V1.3: vccio2 (UART0, carrier GPIO2 signals) and vccio3 run at
+ * 1.8 V, as in the stock DTB.  The upstream board DTS says 3.3 V; with
+ * vccio2 in 3.3 V mode, UART0 TX stays silent.
+ */
+&io_domains {
+	vccio2-supply = <&vcc_1v8>;
+	vccio3-supply = <&vcc_1v8>;
+};
+
 &i2c1 {
 	pcf8563: rtc@51 {
 		compatible = "nxp,pcf8563";
