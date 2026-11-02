@@ -45,10 +45,15 @@ readonly KERNEL_CONSOLE="console=ttyS2,1500000n8 earlycon=uart8250,mmio32,0xff0c
 
 # Debian packages on top of the minbase variant.
 readonly PACKAGES=(
-    systemd-sysv systemd-resolved udev dbus kmod
-    iproute2 iputils-ping ca-certificates less
-    openssh-server
+    # base system
+    systemd-sysv systemd-resolved udev dbus kmod util-linux-extra
+    ca-certificates less nano procps psmisc lsof
+    # network
+    iproute2 iputils-ping openssh-server ethtool lldpd nftables
+    bind9-dnsutils traceroute netcat-openbsd tcpdump
+    # time and GPS
     chrony gpsd gpsd-tools python3-gps python3-serial pps-tools
+    # hardware
     gpiod i2c-tools
 )
 
