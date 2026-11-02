@@ -97,3 +97,24 @@ Pin index n maps to `GPIOb_` + `ABCD`[n / 8] + n % 8.
 | gpsd | `-n -G -s 115200 -f 8N1` on `/dev/gps0` | `rootfs/etc/default/gpsd` |
 | GPS baud | 9600 default, switched to 115200 with `ubxtool -S 115200` | `rootfs/usr/sbin/cc_gpsconfig` |
 | ntpd PPS | driver 22 (`127.127.22.0`), `flag3 1`, `time1 0.000010` | `rootfs/etc/ntp.conf` |
+
+## Mainline support
+
+Checked against Linux, U-Boot and TF-A `master` on 2026-11-01.
+
+| Item | Mainline | Source |
+|---|---|---|
+| Board DTS | `rk3308-rock-pi-s.dts`, compatible `radxa,rockpis` | Linux `arch/arm64/boot/dts/rockchip/` |
+| U-Boot | `rock-pi-s-rk3308_defconfig`, console uart0 at 1500000 | U-Boot `configs/` |
+| DRAM init (TPL) | rkbin blob only (`rk3308_ddr_589MHz_uartX_mY_v2.07.bin`) | U-Boot `doc/board/rockchip/rockchip.rst` |
+| BL31 | rkbin blob only (`rk3308_bl31_v2.26.elf`); TF-A has no rk3308 | TF-A `docs/plat/rockchip.rst` |
+| Ethernet | `rockchip,rk3308-gmac` in `dwmac-rk.c`, RMII only; board DTS has RTL8201F PHY, reset GPIO0_A7 active low | Linux |
+| GPS UART | `uart1` in `rk3308.dtsi`, `pinctrl-0 = <&uart1_xfer &uart1_cts &uart1_rts>`; not enabled in board DTS | Linux |
+| I2C1 | enabled in board DTS | Linux |
+| RTC | `rtc-hym8563.c`, compatible `haoyu,hym8563`; no node in board DTS | Linux |
+| PPS | generic `pps-gpio`; no node in board DTS | Linux |
+| LEDs, button | generic `gpio-leds`, `gpio-keys`; board DTS has only module LEDs GPIO0_A6, GPIO0_A5 | Linux |
+| GPS reset, PPS out enable, PoE sense, barrel | no `gpio-export` binding; use `gpio-hog` or `gpio-line-names` | Linux |
+
+Stock bootloader: Rockchip miniloader with DDR blob "DDR Version V1.26"
+(`idbloader.img`), vendor BL31 (`trust.img`).
