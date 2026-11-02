@@ -152,8 +152,9 @@ Readback on 2026-11-02 (`ubxtool -p CFG-GNSS`, `CFG-NAV5`, `CFG-PRT,1`,
 gpsd: `-n -b -s 115200 /dev/ttyS1` (`/etc/default/gpsd`); `-b` keeps it
 from reconfiguring the receiver.
 
-Measured: NMEA offset +161 ms at 9600 with all default sentences, +33 ms
-at 115200 with GGA/RMC/ZDA; stratum 1 on PPS about 55 s after boot (warm
+Measured: NMEA offset +161 ms at 9600 with all default sentences, +33 to
++48 ms at 115200 with GGA/RMC/ZDA (1 h median +43 ms, drifting +40 to
++48 ms; chrony `offset 0.043`, leaving about +6 ms); stratum 1 on PPS about 55 s after boot (warm
 start); first fix after power-up without valid time: about 13 min.
 
 ## Timing tweaks
@@ -166,7 +167,7 @@ did (`stock/extracted/rootfs/usr/sbin/cc_monitor:2202-2208`).
 |---|---|---|---|
 | PSCI cpuidle state1 `cpu-sleep` | enabled, wake latency 370 us | disabled on CPUs 0-3 (WFI, 1 us, stays) | Interrupt latency for PPS and NTP packets |
 | `end0` IRQ affinity | CPUs 0-3 (all on CPU0) | CPU3 | Away from the PPS and GPS UART interrupts |
-| `end0` RX coalescing | `rx-usecs 819` | `rx-usecs 164` (reads back 163) | NTP request receive timestamps |
+| `end0` RX coalescing | `rx-usecs 819` | `rx-usecs 82`, the stmmac minimum (16 RIWT units of 5.12 us; reads back 81); stock 164 | NTP request receive timestamps |
 
 Not ported: stock conntrack NOTRACK for UDP 123 (no firewall rules yet);
 ntpd's kernel PPS discipline (`flag3 1`) has no chrony equivalent.
@@ -174,6 +175,20 @@ ntpd's kernel PPS discipline (`flag3 1`) has no chrony equivalent.
 Preliminary effect (chrony `sourcestats`, PPS): std dev 585 ns (11
 samples) before, 418 ns (8 samples) 10 min after; package installs ran
 during the window.  The 24 h comparison belongs to Phase 5.
+
+Effect seen by apu-0 (GPS stratum 1 with hardware timestamps,
+chronymon NTP samples of chronos, medians), 2026-11-02:
+
+| Window (UTC) | Setting | n | Delay | Offset (sd) |
+|---|---|---|---|---|
+| 08:56-09:00 | defaults (cpu-sleep on, rx-usecs 819) | 15 | 444 us | +63.5 us (89.6) |
+| 09:00-10:05 | tweaks, rx-usecs 164 | 73 | 190 us | +38.0 us (9.3) |
+| 10:06-10:26 | tweaks, rx-usecs 81 | 19 | 187 us | +34.6 us (9.2) |
+
+- 164 to 81 us is within noise; below 164 us coalescing no longer limits.
+- stmmac accepts rx-usecs 82..1306 only; RIWT off would need a kernel
+  patch (`riwt_off` is set only by the socfpga and mediatek glue in
+  6.18; no DT property).  Not done.
 
 ## MAC address
 

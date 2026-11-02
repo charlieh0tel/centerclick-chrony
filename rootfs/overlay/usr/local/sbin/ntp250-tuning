@@ -14,5 +14,6 @@ irq=$(awk '$NF == "end0" { sub(":", "", $1); print $1 }' /proc/interrupts)
 [ -n "$irq" ] || { echo "ntp250-tuning: no end0 interrupt" >&2; exit 1; }
 echo 3 >"/proc/irq/$irq/smp_affinity_list"
 
-# Ethernet RX interrupt coalescing 164 us (mainline default 819 us).
-ethtool -C end0 rx-usecs 164
+# Ethernet RX interrupt coalescing at the stmmac minimum, 82 us (16
+# RIWT units; mainline default 819 us; stock 164 us).
+ethtool -C end0 rx-usecs 82
