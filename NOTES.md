@@ -98,8 +98,8 @@ overlays are applied); module header pins from Radxa
 | Admin CLI / CH340N (`ttyS2`, uart2m0 `ff0c0000`) | GPIO1_C6 RX, GPIO1_C7 TX | 21, 19 | pull up | 571, 1988 |
 | RTC | I2C1 (`ff050000`) 0x51, SDA GPIO0_B3, SCL GPIO0_B4 | 3, 5 | | 427, 441 |
 | RTC IRQ | GPIO0_C1 | 15 | level low | 2613 |
-| EEPROM `st,24c64` | I2C1 0x54 | 3, 5 | | 455 |
-| GPS I2C | not in DTB; I2C0, I2C2, I2C3 disabled | | | 413, 463, 477 |
+| EEPROM `st,24c64` | I2C1 0x54 in the DTB; not on the bus on this carrier (`i2cdetect -y -r 1`: 0x42, 0x51 only) | 3, 5 | | 455 |
+| GPS I2C (u-blox DDC) | I2C1 0x42 (`i2cdetect`); no DTB node; I2C1 at 400 kHz in stock | 3, 5 | | 438 |
 | LED `green:power` (module) | GPIO0_A6 | on module | trigger heartbeat | 2798 |
 | LED `blue:sd` (module) | GPIO0_A5 | on module | trigger mmc0 | 2805 |
 | LED `green:system` | GPIO2_A7 | 22 | trigger timer | 2812 |
@@ -107,10 +107,10 @@ overlays are applied); module header pins from Radxa
 | LED `green:ntp` | GPIO2_B5 | 28 | trigger none | 2826 |
 | Button SW1 `fp-button-1` | GPIO2_B1 | 18 | gpio-export input, flag 0 (active high); measured: high while pressed, SoC pull-down when idle | 2760 |
 | `hdr-ppsout-en` | GPIO2_A4 | 7 | gpio-export output, low | 2765 |
-| `gps-nreset` | GPIO2_B7 | 32 | gpio-export output, high | 2776 |
+| `gps-nreset` | GPIO2_B7 | 32 | gpio-export output, high; `cc_resetgps` drives 0 for 0.5 s with `gps-reset` 1 | 2776 |
 | `gps-reset` | GPIO2_C0 | 34 | gpio-export output, low | 2782 |
-| `poe-sense` | GPIO2_B2 | 16 | gpio-export input | 2788 |
-| `barrel-mech` | GPIO0_B7 | 11 | gpio-export input | 2771 |
+| `poe-sense` | GPIO2_B2 | 16 | gpio-export input; 1 = PoE power good (`cc_monitor`) | 2788 |
+| `barrel-mech` | GPIO0_B7 | 11 | gpio-export input; 0 = DC plug out (`cc_monitor`) | 2771 |
 | Ethernet (`ff4e0000`) | RMII, MAC clock output, PHY reset GPIO0_A7 active low | on module | | 1294 |
 
 - RX/TX roles: Radxa pin table (UART0, UART1, UART2_M0).
@@ -118,6 +118,14 @@ overlays are applied); module header pins from Radxa
 - `boot/rockchip/overlays/chronos.dtbo` (`stock/chronos-overlay.dts`)
   names LEDs `chronos:green:{system,ntp,disk}`; `boot.scr` does not
   load it.
+
+## GPS module
+
+Source: u-blox boot banner on `ttyS1` after `ntp250-gps-reset`.
+
+- UBX-M8030, ROM CORE 3.01, firmware SPG 3.01, protocol 18.00.
+- NMEA at 9600 baud by default; GNSS OTP GPS and GLONASS.
+- Antenna supervisor: `ANTSUPERV=AC SD PDoS SR`.
 
 ## Stock time services
 

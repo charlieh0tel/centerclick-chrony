@@ -1,0 +1,5 @@
+#!/bin/sh
+# Reset the u-blox GPS: hold reset for 0.5 s, then release (as stock
+# cc_resetgps).
+set -eu
+exec gpioset -t 500ms,0 gps-reset=1 gps-nreset=0

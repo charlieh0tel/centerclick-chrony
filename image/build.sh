@@ -162,7 +162,7 @@ stage_rootfs() {
     local include
     include=$(IFS=,; echo "${PACKAGES[*]}")
     tar -C "$ROOT/rootfs/overlay" --owner=0 --group=0 --mode=go-w \
-        -cf "$BUILD/overlay.tar" etc
+        -cf "$BUILD/overlay.tar" etc usr
     # shellcheck disable=SC2016 # mmdebstrap expands $1 in hooks.
     mmdebstrap --mode=unshare --variant=minbase --architectures=arm64 \
         --keyring="$DEBIAN_KEYRING" --include="$include" \

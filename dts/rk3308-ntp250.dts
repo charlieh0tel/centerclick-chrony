@@ -61,28 +61,43 @@
 	};
 };
 
-/* Output levels as the stock DTB's gpio-export nodes set them. */
+/*
+ * Carrier signals by name, for libgpiod.  Outputs (gps-nreset,
+ * gps-reset, hdr-ppsout-en) stay free for userspace: ntp250-gpio-init
+ * sets their idle levels at boot, ntp250-gps-reset pulses them.  Other
+ * names follow the upstream ROCK Pi S DTS.
+ */
+&gpio0 {
+	gpio-line-names =
+		/* GPIO0_A0 - A7 */
+		"", "", "", "", "", "", "", "",
+		/* GPIO0_B0 - B7 */
+		"", "", "", "header1-pin3 [GPIO0_B3]",
+		"header1-pin5 [GPIO0_B4]", "", "",
+		"barrel-mech",
+		/* GPIO0_C0 - C7 */
+		"header1-pin13 [GPIO0_C0]", "rtc-int", "", "", "",
+		"", "", "",
+		/* GPIO0_D0 - D7 */
+		"", "", "", "", "", "", "", "";
+};
+
 &gpio2 {
-	hdr-ppsout-en-hog {
-		gpio-hog;
-		gpios = <RK_PA4 GPIO_ACTIVE_HIGH>;
-		output-low;
-		line-name = "hdr-ppsout-en";
-	};
-
-	gps-nreset-hog {
-		gpio-hog;
-		gpios = <RK_PB7 GPIO_ACTIVE_HIGH>;
-		output-high;
-		line-name = "gps-nreset";
-	};
-
-	gps-reset-hog {
-		gpio-hog;
-		gpios = <RK_PC0 GPIO_ACTIVE_HIGH>;
-		output-low;
-		line-name = "gps-reset";
-	};
+	gpio-line-names =
+		/* GPIO2_A0 - A7 */
+		"header1-pin10 [GPIO2_A0]", "header1-pin8 [GPIO2_A1]",
+		"", "",
+		"hdr-ppsout-en", "led-sd",
+		"header2-pin46 [GPIO2_A6]", "led-system",
+		/* GPIO2_B0 - B7 */
+		"header2-pin45 [GPIO2_B0]", "button-front",
+		"poe-sense", "header2-pin44 [GPIO2_B3]",
+		"header2-pin43 [GPIO2_B4]", "led-ntp",
+		"gps-pps", "gps-nreset",
+		/* GPIO2_C0 - C7 */
+		"gps-reset", "", "", "", "", "", "", "",
+		/* GPIO2_D0 - D7 */
+		"", "", "", "", "", "", "", "";
 };
 
 /*
@@ -95,7 +110,14 @@
 	vccio3-supply = <&vcc_1v8>;
 };
 
+/* No eMMC or SD-NAND fitted on this module. */
+&emmc {
+	status = "disabled";
+};
+
 &i2c1 {
+	clock-frequency = <400000>;
+
 	pcf8563: rtc@51 {
 		compatible = "nxp,pcf8563";
 		reg = <0x51>;
@@ -104,13 +126,6 @@
 		interrupt-parent = <&gpio0>;
 		interrupts = <RK_PC1 IRQ_TYPE_LEVEL_LOW>;
 		#clock-cells = <0>;
-	};
-
-	eeprom@54 {
-		compatible = "atmel,24c64";
-		reg = <0x54>;
-		pagesize = <32>;
-		read-only;
 	};
 };
 
@@ -139,4 +154,16 @@
 /* CH340N, carrier micro-USB "Console". */
 &uart2 {
 	status = "okay";
+};
+
+/*
+ * Unused Wi-Fi (SDIO) and Bluetooth (uart4), disabled as in the stock DTB.
+ * sdio_pwrseq stays: it holds the RTL8723DS in reset.
+ */
+&sdio {
+	status = "disabled";
+};
+
+&uart4 {
+	status = "disabled";
 };

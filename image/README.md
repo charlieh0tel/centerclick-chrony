@@ -40,6 +40,9 @@ from a tarball).
 | Network | `systemd-networkd`, DHCP on Ethernet |
 | SSH | root by key only; host keys generated on first boot |
 | Hostname | `ntp250` |
+| Carrier GPIOs | named lines (`gpioinfo`); `ntp250-gpio-init.service` sets `gps-nreset`=1, `gps-reset`=0, `hdr-ppsout-en`=0 at boot |
+| GPS reset | `ntp250-gps-reset` (0.5 s pulse, as stock `cc_resetgps`) |
+| Disabled | eMMC (not fitted), Wi-Fi (SDIO), Bluetooth (uart4) |
 
 ## Write to a card
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=Set NTP250 carrier GPIO idle levels (GPS out of reset)
+Before=gpsd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Stock gpio-export levels: GPS running, header PPS output off.
+ExecStart=/usr/bin/gpioset -t 0 gps-nreset=1 gps-reset=0 hdr-ppsout-en=0
+
+[Install]
+WantedBy=multi-user.target
