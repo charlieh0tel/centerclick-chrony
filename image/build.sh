@@ -23,15 +23,21 @@ readonly AUTHORIZED_KEYS=${NTP250_AUTHORIZED_KEYS:-$HOME/.ssh/id_ed25519.pub}
 
 # Card layout in 512-byte sectors.  The RK3308 boot ROM loads U-Boot
 # (idbloader + FIT) from sector 64; the root partition starts at 16 MiB,
-# as on the stock card.
+# as on the stock card.  The data partition follows root; systemd-repart
+# grows it to the end of the card on first boot.
 readonly UBOOT_SECTOR=64
 readonly ROOT_START_SECTOR=32768
 readonly ROOT_SIZE_MIB=2048
+readonly DATA_SIZE_MIB=512
 # Room for the backup GPT at the end of the image.
 readonly GPT_TAIL_MIB=1
 # Fixed so extlinux.conf and fstab can name the root partition.
 readonly ROOT_PARTUUID=33f4c7e9-0436-473f-9913-48d960e86116
 readonly ROOT_FS_UUID=54bad6a8-164c-4ba7-9e9d-a63bf9872bd4
+readonly DATA_PARTUUID=21a10599-5390-427c-8790-0a84a983ba3c
+readonly DATA_FS_UUID=b83d83f4-2dd3-473c-8405-dbd96c7191d1
+# Trees that live on the data partition, bind-mounted from /data.
+readonly DATA_TREES=(var/lib var/log)
 
 # Debian archive signing keys (Ubuntu package debian-archive-keyring).
 readonly DEBIAN_KEYRING=/usr/share/keyrings/debian-archive-keyring.gpg
@@ -46,7 +52,7 @@ readonly KERNEL_CONSOLE="console=ttyS2,1500000n8 earlycon=uart8250,mmio32,0xff0c
 # Debian packages on top of the minbase variant.
 readonly PACKAGES=(
     # base system
-    systemd-sysv systemd-resolved udev dbus kmod util-linux-extra
+    systemd-sysv systemd-resolved systemd-repart udev dbus kmod util-linux-extra
     ca-certificates less nano procps psmisc lsof
     # network
     iproute2 iputils-ping openssh-server ethtool lldpd nftables
@@ -178,7 +184,7 @@ stage_rootfs() {
         --customize-hook="tar-in '$BUILD/kernel.tar' /" \
         --customize-hook="upload '$AUTHORIZED_KEYS' /root/.ssh/authorized_keys" \
         --customize-hook="upload '$ROOT/image/rootfs-setup.sh' /tmp/rootfs-setup.sh" \
-        --customize-hook="chroot \"\$1\" sh /tmp/rootfs-setup.sh '$HOSTNAME' '$ROOT_PARTUUID' '$KERNEL_CONSOLE' '$DTB'" \
+        --customize-hook="chroot \"\$1\" sh /tmp/rootfs-setup.sh '$HOSTNAME' '$ROOT_PARTUUID' '$DATA_PARTUUID' '$KERNEL_CONSOLE' '$DTB'" \
         --customize-hook='rm "$1/tmp/rootfs-setup.sh"' \
         "$DEBIAN_SUITE" "$BUILD/rootfs.tar" "$DEBIAN_MIRROR"
 }
@@ -190,23 +196,48 @@ mkfs_tar() {
     mkfs.ext4 -q -F -L "$1" -U "$2" -E root_owner=0:0 -d "$3" "$5" "${4}M"
 }
 
+# split_rootfs ROOT_TAR DATA_TAR: split rootfs.tar into the root
+# partition's tree (DATA_TREES left as empty mount points) and the data
+# partition's (DATA_TREES only, at the same paths).  DATA_TREES are under
+# var/.
+split_rootfs() {
+    local list=$BUILD/rootfs.list trees
+    trees=$(IFS='|'; echo "${DATA_TREES[*]}")
+    # Members inside a data tree; directories both partitions keep.
+    local data_re="^\./($trees)/." keep_re="^\./(var/|($trees)/)?\$"
+    tar -tf "$BUILD/rootfs.tar" --quoting-style=literal >"$list"
+    cp "$BUILD/rootfs.tar" "$1"
+    grep -E "$data_re" "$list" | tar --delete -f "$1" --no-recursion --verbatim-files-from -T -
+    cp "$BUILD/rootfs.tar" "$2"
+    grep -vE "$data_re|$keep_re" "$list" | tar --delete -f "$2" --no-recursion --verbatim-files-from -T -
+}
+
 stage_image() {
-    local rootimg=$BUILD/root.ext4 part=$IMAGE.part
+    local rootimg=$BUILD/root.ext4 dataimg=$BUILD/data.ext4 part=$IMAGE.part
+    local roottar=$BUILD/root.tar datatar=$BUILD/data.tar
     local uboot=$BUILD/u-boot-rockchip.bin
     local uboot_max=$(( (ROOT_START_SECTOR - UBOOT_SECTOR) * 512 ))
-    local total_mib=$(( ROOT_START_SECTOR * 512 / 1048576 + ROOT_SIZE_MIB + GPT_TAIL_MIB ))
+    local data_start=$(( ROOT_START_SECTOR + ROOT_SIZE_MIB * 2048 ))
+    local total_mib=$(( ROOT_START_SECTOR * 512 / 1048576 + ROOT_SIZE_MIB + DATA_SIZE_MIB + GPT_TAIL_MIB ))
     (( $(stat -c %s "$uboot") <= uboot_max )) || die "$uboot overlaps the root partition"
     log "image $IMAGE"
-    mkfs_tar ntp250-root "$ROOT_FS_UUID" "$BUILD/rootfs.tar" "$ROOT_SIZE_MIB" "$rootimg"
+    split_rootfs "$roottar" "$datatar"
+    mkfs_tar ntp250-root "$ROOT_FS_UUID" "$roottar" "$ROOT_SIZE_MIB" "$rootimg"
+    mkfs_tar ntp250-data "$DATA_FS_UUID" "$datatar" "$DATA_SIZE_MIB" "$dataimg"
     mkdir -p "$OUT"
     rm -f "$part"
     truncate -s "${total_mib}M" "$part"
     sgdisk --clear \
         --new=1:"$ROOT_START_SECTOR":+"${ROOT_SIZE_MIB}M" \
-        --typecode=1:8300 --change-name=1:root \
+        --typecode=1:8305 --change-name=1:root \
         --partition-guid=1:"$ROOT_PARTUUID" --attributes=1:set:2 \
+        --new=2:"$data_start":+"${DATA_SIZE_MIB}M" \
+        --typecode=2:8300 --change-name=2:data \
+        --partition-guid=2:"$DATA_PARTUUID" \
         "$part" >/dev/null
     dd if="$rootimg" of="$part" bs=512 seek="$ROOT_START_SECTOR" \
+        conv=notrunc,sparse status=none
+    dd if="$dataimg" of="$part" bs=512 seek="$data_start" \
         conv=notrunc,sparse status=none
     dd if="$uboot" of="$part" bs=512 seek="$UBOOT_SECTOR" \
         conv=notrunc status=none
