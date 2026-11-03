@@ -169,6 +169,13 @@ did (`stock/extracted/rootfs/usr/sbin/cc_monitor:2202-2208`).
 | `end0` IRQ affinity | CPUs 0-3 (all on CPU0) | CPU3 | Away from the PPS and GPS UART interrupts |
 | `end0` RX coalescing | `rx-usecs 819` | `rx-usecs 82`, the stmmac minimum (16 RIWT units of 5.12 us; reads back 81); stock 164 | NTP request receive timestamps |
 
+No hardware timestamps: the GMAC (DWMAC1000, Synopsys ID 0x35) has no
+IEEE 1588 unit.  `DMA_HW_FEATURE` (0xff4e1058) reads 0x000d0f17, bits 12
+and 13 (TSVER1SEL, TSVER2SEL) clear; timestamp registers 0x700-0x72c read
+0 and do not take writes (sub-second increment); the driver logs "PTP not
+supported by HW"; `ethtool -T end0` lists software modes only.  NTP
+timestamps are software, so interrupt latency and coalescing count.
+
 Not ported: stock conntrack NOTRACK for UDP 123 (no firewall rules yet);
 ntpd's kernel PPS discipline (`flag3 1`) has no chrony equivalent.
 
