@@ -17,7 +17,7 @@ Boot a self-built Linux image from microSD on the CenterClick NTP250 and run chr
 | Console | micro-USB via CH340N is `ttyS2` (stock: admin CLI, 115200 8N1; our image: U-Boot and kernel console, 1500000 8N1); module header `ttyS0` at 1500000 8N1 |
 | Ethernet | 10/100 |
 | Power | PoE (in use) or 7-11 V DC on this rev |
-| RTC + GPS backup | Supercap, about 3 h holdover |
+| GPS backup | Supercap, about 3 h holdover; the RTC is not backed (NOTES.md "Power-loss holdover") |
 | PPS output terminal | **None** (added in rev 15); PPS goes only to a SoC GPIO |
 
 ## Unknowns to resolve (Phase 1)
@@ -159,7 +159,7 @@ Status: done.
    ```
    The Debian pool in `chrony.conf` provides sanity sources.
 4. Calibrate the NMEA offset: after 1 h, set it from `chronyc sourcestats` so that NMEA ~= PPS.
-5. Support holdover and power loss: the supercap RTC should let the box boot with a sane clock before GPS lock.
+5. Support holdover and power loss: boot with a sane clock before GPS lock.  The RTC loses time with power off, so this needs a saved clock (see Phase 6).
 
 **Done when:**
 - `chronyc tracking` shows Stratum 1 with PPS selected

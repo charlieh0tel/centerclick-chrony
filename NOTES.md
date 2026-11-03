@@ -15,7 +15,7 @@ Findings log. Each entry cites its source.
 
 ## Base board "CHRONOS V10" (photos in `photos/`)
 - U3: u-blox MAX-M8Q-0-10.
-- U2: NXP PCF8563 RTC (stock DTB uses compatible `haoyu,hym8563`), Y1 32.768 kHz, C15 supercap backup.
+- U2: NXP PCF8563 RTC (stock DTB uses compatible `haoyu,hym8563`), Y1 32.768 kHz.  C15 supercap backs the GPS (owner's reading of the board), not the RTC (see "Power-loss holdover").
 - U4: CH340N, micro-USB "Console", 115200 8N1.
 - Header "UART0" (TX/RX/GND) near R25/R26. Presumed wired to ROCK Pi S
   header pins 8/10 (UART0, kernel console); unverified.
@@ -168,9 +168,10 @@ power (PoE and DC) removed for about 18 min.
 | System time | from network | chrony stepped +17568213 s at about 38 s uptime (Debian pool) |
 | GPS (MAX-M8Q BBR) | partial | PPS selected at 190 s uptime (warm reboot: about 55 s; no valid time: about 13 min) |
 
-A warm reboot keeps the RTC (voltage-low flag clear).  Not yet known:
-whether the supercap feeds the PCF8563 at all (U2 pin 8 VDD with power
-off), and holdover with no network.
+A warm reboot keeps the RTC (voltage-low flag clear).  The result
+matches the supercap feeding only the GPS backup supply, not the
+PCF8563; to confirm, measure U2 pin 8 VDD with power off.  Holdover with
+no network not tested.
 
 ## Timing tweaks
 
