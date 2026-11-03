@@ -182,6 +182,7 @@ did (`stock/extracted/rootfs/usr/sbin/cc_monitor:2202-2208`).
 | Tweak | Mainline default | Set | Reason |
 |---|---|---|---|
 | PSCI cpuidle state1 `cpu-sleep` | enabled, wake latency 370 us | disabled on CPUs 0-3 (WFI, 1 us, stays) | Interrupt latency for PPS and NTP packets |
+| CPU governor | `schedutil`, 600 MHz 95% of the time (408 MHz never used) | `performance`, 1008 MHz | Interrupt latency for PPS and NTP packets |
 | `end0` IRQ affinity | CPUs 0-3 (all on CPU0) | CPU3 | Away from the PPS and GPS UART interrupts |
 | `end0` RX coalescing | `rx-usecs 819` | `rx-usecs 82`, the stmmac minimum (16 RIWT units of 5.12 us; reads back 81); stock 164 | NTP request receive timestamps |
 
@@ -209,6 +210,20 @@ chronymon NTP samples of chronos, medians), 2026-11-02:
 | 10:06-10:26 | tweaks, rx-usecs 81 | 19 | 187 us | +34.6 us (9.2) |
 
 - 164 to 81 us is within noise; below 164 us coalescing no longer limits.
+Governor, 2026-11-03, 2 h windows (first 6 min after each switch left
+out).  PPS from `refclocks.log` (raw per-pulse offset), RMS from
+`tracking.log`, delay and offset from apu-0 chronymon (means):
+
+| Window (UTC) | Governor | PPS sd | PPS p99 | RMS offset | apu-0 delay (min) | apu-0 offset (sd) | SoC |
+|---|---|---|---|---|---|---|---|
+| 14:00-16:00 | schedutil | 2248 ns | 7112 ns | 466 ns | 183 us (150) | +30.4 us (8.6) | 34.0 C |
+| 16:07-18:01 | performance | 1753 ns | 5473 ns | 397 ns | 169 us (120) | +26.9 us (9.3) | 35.5 C |
+| 18:07-20:01 | schedutil | 2232 ns | 6691 ns | 408 ns | 180 us (144) | +29.7 us (10.9) | 34.8 C |
+
+- performance: per-pulse PPS spread about 20% lower at every
+  percentile; NTP delay 11-14 us lower; offset sd within noise; about
+  1 C warmer.
+
 - stmmac accepts rx-usecs 82..1306 only; RIWT off would need a kernel
   patch (`riwt_off` is set only by the socfpga and mediatek glue in
   6.18; no DT property).  Not done.

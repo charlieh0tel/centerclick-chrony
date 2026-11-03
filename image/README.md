@@ -51,7 +51,7 @@ from a tarball).
 | Journal | volatile, `/run/log/journal`, at most 32 MiB (`journald.conf.d/ntp250.conf`) |
 | Watchdog | `dw_wdt` `/dev/watchdog0`, systemd `RuntimeWatchdogSec=30s` (`system.conf.d/ntp250.conf`) |
 | Disabled | eMMC (not fitted), Wi-Fi (SDIO), Bluetooth (uart4) |
-| Timing tweaks | `ntp250-tuning.service`: cpuidle state1 off, `end0` IRQ on CPU3, `rx-usecs 82`; see `NOTES.md` "Timing tweaks" |
+| Timing tweaks | `ntp250-tuning.service`: cpuidle state1 off, governor `performance`, `end0` IRQ on CPU3, `rx-usecs 82`; see `NOTES.md` "Timing tweaks" |
 
 ## Write to a card
 

@@ -1,5 +1,5 @@
 [Unit]
-Description=NTP250 timing tweaks (CPU idle, Ethernet IRQ and coalescing)
+Description=NTP250 timing tweaks (CPU idle and governor, Ethernet IRQ and coalescing)
 BindsTo=sys-subsystem-net-devices-end0.device
 After=sys-subsystem-net-devices-end0.device
 
