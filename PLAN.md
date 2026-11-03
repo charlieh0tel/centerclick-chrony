@@ -14,7 +14,7 @@ Boot a self-built Linux image from microSD on the CenterClick NTP250 and run chr
 | RAM | 512 MiB |
 | Boot media | microSD, stock card is a Gigastone 8 GB |
 | GPS | u-blox MAX-M8Q, active 3.3 V antenna; GPS I2C also wired to the CPU |
-| Console | micro-USB via CH340N is `ttyS2` (stock admin CLI, 115200 8N1); kernel console is `ttyS0` at 1500000 8N1, not on micro-USB |
+| Console | micro-USB via CH340N is `ttyS2` (stock: admin CLI, 115200 8N1; our image: U-Boot and kernel console, 1500000 8N1); module header `ttyS0` at 1500000 8N1 |
 | Ethernet | 10/100 |
 | Power | PoE (in use) or 7-11 V DC on this rev |
 | RTC + GPS backup | Supercap, about 3 h holdover |
@@ -58,6 +58,8 @@ centerclick-chrony/
 
 ## Phase 0: Back up the stock card (workstation)
 
+Status: done.
+
 Human: shut down the NTP250, open the case, remove the microSD and insert it into the workstation reader.
 
 1. Identify the device with `lsblk -o NAME,SIZE,MODEL,SERIAL`, then confirm it with the human.
@@ -68,6 +70,8 @@ Human: shut down the NTP250, open the case, remove the microSD and insert it int
 **Done when:** the image exists, its checksum is recorded, and its size matches the card.
 
 ## Phase 1: Reverse-engineer the stock image (workstation, image file only)
+
+Status: done (NOTES.md).
 
 Work only on the image file. The physical card is no longer needed and can go back into the unit.
 
@@ -94,13 +98,15 @@ Work only on the image file. The physical card is no longer needed and can go ba
 
 ## Phase 2: Choose a base and build the image (workstation)
 
+Status: done: mainline Linux and U-Boot, Debian trixie (`image/README.md`).
+
 Pick a base in this order of preference:
 1. Armbian or Debian support for the identified compute module, if one exists
 2. Generic mainline RK3308 support (U-Boot + kernel), with our own DTS
 3. Last resort: reuse the stock U-Boot and kernel with our own rootfs
 
 Then:
-1. Write `dts/ntp250.dts`. Start from the mainline DTS for the closest board and carry over the pin map from Phase 1. It must include:
+1. Write `dts/rk3308-ntp250.dts`. Start from the mainline DTS for the closest board and carry over the pin map from Phase 1. It must include:
    - a `pps-gpio` node (assert edge per stock config, rising by default)
    - the GPS UART enabled
    - the RTC on its I2C bus
@@ -121,8 +127,10 @@ Then:
 
 ## Phase 3: Bring-up (workstation + NTP250)
 
+Status: done.
+
 1. Human: write `out/ntp250.img` to the blank card, after confirming the device per Safety rule 1.
-2. Human: insert the card and power up on PoE, with the workstation attached to the kernel console (`ttyS0`, 1500000 8N1).
+2. Human: insert the card and power up on PoE, with the workstation attached to the kernel console (`ttyS2`, micro-USB, 1500000 8N1).
 3. Capture the boot log to `validate/boot-*.log`.
 4. Check on the NTP250 (console or SSH):
    - `ip link`: Ethernet comes up at 100 Mb/s
@@ -135,22 +143,23 @@ Then:
 
 ## Phase 4: GPS and chrony configuration (NTP250)
 
+Status: configured; 24 h run from 2026-11-02 18:18 UTC pending.
+
 1. Configure the M8Q with ubxtool:
    - stationary dynamic model
-   - GPS + GLONASS + Galileo enabled
+   - GPS + Galileo enabled (GLONASS, BeiDou off)
    - timepulse 1 Hz aligned to GPS or UTC
    - only the needed NMEA sentences
-   - save to BBR/flash
+   - save to BBR (no flash; reapplied at every boot by `ntp250-gps-config.service`)
 2. gpsd: run on the GPS UART with `-n`. Make sure PPS reaches chrony exactly once, either via gpsd SHM/SOCK or directly from `/dev/pps0`, never both.
-3. Write `/etc/chrony/chrony.conf` (source under `rootfs/overlay/`):
+3. Write `/etc/chrony/conf.d/ntp250.conf` (source under `rootfs/overlay/`):
    ```
-   refclock SHM 0 refid NMEA offset 0.0 delay 0.2 noselect
+   refclock SHM 0 refid NMEA offset 0.043 delay 0.2 noselect
    refclock PPS /dev/pps0 lock NMEA refid PPS prefer poll 4
-   allow <LAN prefix>
-   makestep 1 3
-   rtcsync
+   allow
+   tempcomp /sys/class/thermal/thermal_zone0/temp 32 40000 0 0 0
    ```
-   Add 2-3 network servers as sanity sources.
+   The Debian pool in `chrony.conf` provides sanity sources.
 4. Calibrate the NMEA offset: after 1 h, set it from `chronyc sourcestats` so that NMEA ~= PPS.
 5. Support holdover and power loss: the supercap RTC should let the box boot with a sane clock before GPS lock.
 
@@ -161,19 +170,28 @@ Then:
 
 ## Phase 5: Validation (workstation)
 
-1. Wire `validate/collect.sh` to log, every 5 min for 48 h:
-   - `chronyc tracking`
-   - `chronyc sourcestats`
-   - `chronyc sources -v`
-2. Have a second LAN host poll both this box and an independent reference (another GPS-disciplined server, if available) and log the offset between them.
-3. Summarize the results in NOTES.md: offset distribution, jitter, and any outliers.
+1. chronymon on the NTP250 records chronyd tracking and source statistics.
+2. chronymon on apu-0 (GPS stratum 1, i210 hardware timestamps) polls this box and records offset and delay (http://apu-0.murgatroid.com:8323).
+3. Summarize 48 h of results in NOTES.md: offset distribution, jitter, and any outliers.
+4. Fit the `tempcomp` coefficients from chrony's `tempcomp.log` and `tracking.log` once enough temperature range is logged.
 
 ## Phase 6: Polish
 
 - LED semantics: PPS LED blinks on each assert; NTP LED is lit when chrony is synced.
-- Read-only root, or overlayfs, to protect the SD card. Logs go to tmpfs.
+- Read-only root, or overlayfs, to protect the SD card. Logs go to tmpfs: journald volatile with a size cap.
+- SD write rate of chronymon and chrony logging (`log refclocks` writes one line per second).
+- nftables firewall, with NOTRACK for UDP 123 as stock.
+- systemd hardware watchdog.
+- Grow the root partition to the card on first boot (systemd-repart).
+- Default target multi-user; no getty on tty1.
+- U-Boot: boot extlinux without trying EFI first.
 - Unattended security updates.
 - README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.
+
+## Upstream (ask first)
+
+- ROCK Pi S V1.3: vccio2 and vccio3 are 1.8 V; Linux and U-Boot DTS say 3.3 V (NOTES.md "I/O voltage domains").
+- Linux: RK3308 TSADC driver match and DT node (`image/patches/linux/`).
 
 ## Out of scope
 
