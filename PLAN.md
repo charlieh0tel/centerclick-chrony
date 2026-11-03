@@ -176,10 +176,9 @@ Status: done.
 ## Phase 6: Polish
 
 - LED semantics: PPS LED blinks on each assert; NTP LED is lit when chrony is synced.
-- Read-only root, or overlayfs, to protect the SD card. Logs go to tmpfs: journald volatile with a size cap.
+- Read-only root, or overlayfs, to protect the SD card.
 - SD write rate of chronymon and chrony logging (`log refclocks` writes one line per second).
 - nftables firewall, with NOTRACK for UDP 123 as stock.
-- systemd hardware watchdog.
 - Grow the root partition to the card on first boot (systemd-repart).
 - Default target multi-user; no getty on tty1.
 - U-Boot: boot extlinux without trying EFI first.
