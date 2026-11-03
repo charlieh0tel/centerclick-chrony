@@ -58,8 +58,6 @@ centerclick-chrony/
 
 ## Phase 0: Back up the stock card (workstation)
 
-Status: done.
-
 Human: shut down the NTP250, open the case, remove the microSD and insert it into the workstation reader.
 
 1. Identify the device with `lsblk -o NAME,SIZE,MODEL,SERIAL`, then confirm it with the human.
@@ -70,8 +68,6 @@ Human: shut down the NTP250, open the case, remove the microSD and insert it int
 **Done when:** the image exists, its checksum is recorded, and its size matches the card.
 
 ## Phase 1: Reverse-engineer the stock image (workstation, image file only)
-
-Status: done (NOTES.md).
 
 Work only on the image file. The physical card is no longer needed and can go back into the unit.
 
@@ -97,8 +93,6 @@ Work only on the image file. The physical card is no longer needed and can go ba
 **Fallback if the DTB is missing or obfuscated:** boot the stock unit and capture the full U-Boot and kernel log over the USB console, then probe with a multimeter. Ask the human before attempting either.
 
 ## Phase 2: Choose a base and build the image (workstation)
-
-Status: done: mainline Linux and U-Boot, Debian trixie (`image/README.md`).
 
 Pick a base in this order of preference:
 1. Armbian or Debian support for the identified compute module, if one exists
@@ -127,8 +121,6 @@ Then:
 
 ## Phase 3: Bring-up (workstation + NTP250)
 
-Status: done.
-
 1. Human: write `out/ntp250.img` to the blank card, after confirming the device per Safety rule 1.
 2. Human: insert the card and power up on PoE, with the workstation attached to the kernel console (`ttyS2`, micro-USB, 1500000 8N1).
 3. Capture the boot log to `validate/boot-*.log`.
@@ -142,8 +134,6 @@ Status: done.
 **Done when** all five checks pass. Log any failure and its fix in NOTES.md.
 
 ## Phase 4: GPS and chrony configuration (NTP250)
-
-Status: configured; 24 h run from 2026-11-02 18:18 UTC pending.
 
 1. Configure the M8Q with ubxtool:
    - stationary dynamic model
