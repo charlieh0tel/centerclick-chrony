@@ -157,6 +157,21 @@ Measured: NMEA offset +161 ms at 9600 with all default sentences, +33 to
 +48 ms; chrony `offset 0.043`, leaving about +6 ms); stratum 1 on PPS about 55 s after boot (warm
 start); first fix after power-up without valid time: about 13 min.
 
+## Power-loss holdover
+
+Test 2026-11-03: unit powered about 9 h (supercap charged), then all
+power (PoE and DC) removed for about 18 min.
+
+| Item | Result | Evidence |
+|---|---|---|
+| RTC (PCF8563) | time lost | voltage-low flag set (seconds register 0xc1); kernel: "low voltage detected, date/time is not reliable", "hctosys: unable to read the hardware clock"; boot date 2026-04-13 |
+| System time | from network | chrony stepped +17568213 s at about 38 s uptime (Debian pool) |
+| GPS (MAX-M8Q BBR) | partial | PPS selected at 190 s uptime (warm reboot: about 55 s; no valid time: about 13 min) |
+
+A warm reboot keeps the RTC (voltage-low flag clear).  Not yet known:
+whether the supercap feeds the PCF8563 at all (U2 pin 8 VDD with power
+off), and holdover with no network.
+
 ## Timing tweaks
 
 Applied at boot by `ntp250-tuning.service`
