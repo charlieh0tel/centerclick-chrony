@@ -159,7 +159,7 @@ Status: done.
    ```
    The Debian pool in `chrony.conf` provides sanity sources.
 4. Calibrate the NMEA offset: after 1 h, set it from `chronyc sourcestats` so that NMEA ~= PPS.
-5. Support holdover and power loss: boot with a sane clock before GPS lock.  The RTC loses time with power off, so this needs a saved clock (see Phase 6).
+5. Support holdover and power loss: boot with a sane clock before GPS lock.  The RTC loses time with power off, so this needs a saved clock (Phase 6, maybe).
 
 **Done when:**
 - `chronyc tracking` shows Stratum 1 with PPS selected
@@ -183,6 +183,7 @@ Status: done.
 - Grow the root partition to the card on first boot (systemd-repart).
 - Default target multi-user; no getty on tty1.
 - U-Boot: boot extlinux without trying EFI first.
+- Maybe: saved clock for boots after power loss (RTC not backed).  A timer touches `/var/lib/systemd/timesync/clock` hourly and at shutdown while chrony is synchronized; systemd PID 1 starts the clock no earlier than its mtime.  Not the `fake-hwclock` package: its periodic save needs cron.
 - Unattended security updates.
 - README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.
 
