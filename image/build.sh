@@ -183,6 +183,13 @@ stage_rootfs() {
         "$DEBIAN_SUITE" "$BUILD/rootfs.tar" "$DEBIAN_MIRROR"
 }
 
+# mkfs_tar LABEL UUID TARBALL SIZE_MIB OUT: ext4 image OUT of SIZE_MIB
+# filled from TARBALL.
+mkfs_tar() {
+    rm -f "$5"
+    mkfs.ext4 -q -F -L "$1" -U "$2" -E root_owner=0:0 -d "$3" "$5" "${4}M"
+}
+
 stage_image() {
     local rootimg=$BUILD/root.ext4 part=$IMAGE.part
     local uboot=$BUILD/u-boot-rockchip.bin
@@ -190,9 +197,7 @@ stage_image() {
     local total_mib=$(( ROOT_START_SECTOR * 512 / 1048576 + ROOT_SIZE_MIB + GPT_TAIL_MIB ))
     (( $(stat -c %s "$uboot") <= uboot_max )) || die "$uboot overlaps the root partition"
     log "image $IMAGE"
-    rm -f "$rootimg"
-    mkfs.ext4 -q -F -L ntp250-root -U "$ROOT_FS_UUID" -E root_owner=0:0 \
-        -d "$BUILD/rootfs.tar" "$rootimg" "${ROOT_SIZE_MIB}M"
+    mkfs_tar ntp250-root "$ROOT_FS_UUID" "$BUILD/rootfs.tar" "$ROOT_SIZE_MIB" "$rootimg"
     mkdir -p "$OUT"
     rm -f "$part"
     truncate -s "${total_mib}M" "$part"
