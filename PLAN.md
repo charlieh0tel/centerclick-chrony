@@ -181,6 +181,7 @@ Status: done.
 - nftables firewall, with NOTRACK for UDP 123 as stock.
 - Default target multi-user; no getty on tty1.
 - U-Boot: boot extlinux without trying EFI first.
+- CPU governor: test `performance` (1008 MHz) against `schedutil` (408-1008 MHz): PPS std dev, apu-0 offset and delay sd, SoC temperature; adopt in `ntp250-tuning` if better.
 - Maybe: saved clock for boots after power loss (RTC not backed).  A timer touches `/var/lib/systemd/timesync/clock` hourly and at shutdown while chrony is synchronized; systemd PID 1 starts the clock no earlier than its mtime.  Not the `fake-hwclock` package: its periodic save needs cron.
 - Unattended security updates.
 - README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.
