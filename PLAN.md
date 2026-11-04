@@ -166,6 +166,8 @@ Status: done.
 - after 24 h, the PPS offset std dev is under 1 us and system time is within 10 us of PPS
 - LAN clients sync to the box
 
+Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
+
 ## Phase 5: Validation (workstation)
 
 1. chronymon on the NTP250 records chronyd tracking and source statistics.

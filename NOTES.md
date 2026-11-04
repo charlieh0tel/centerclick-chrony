@@ -157,6 +157,19 @@ Measured: NMEA offset +161 ms at 9600 with all default sentences, +33 to
 +48 ms; chrony `offset 0.043`, leaving about +6 ms); stratum 1 on PPS about 55 s after boot (warm
 start); first fix after power-up without valid time: about 13 min.
 
+## 24 h run
+
+2026-11-03 03:50 to 2026-11-04 03:44 UTC, PPS selected throughout
+(chrony `tracking.log`, `statistics.log`, 5373 updates).  Governor
+schedutil, except performance 16:01-18:01 and from 20:21; tempcomp
+coefficients zero.
+
+| Measure | Result | Target (PLAN.md Phase 4) |
+|---|---|---|
+| System time offset to PPS | RMS 503 ns, max 6.1 us (18:03, governor switch) | within 10 us |
+| PPS std dev (`statistics.log`) | mean 535 ns, max 2.5 us; 8% of updates at 1 us or more, spread over all hours | under 1 us |
+| Clients | 8 LAN hosts, no drops | sync to the box |
+
 ## Power-loss holdover
 
 Test 2026-11-03: unit powered about 9 h (supercap charged), then all
