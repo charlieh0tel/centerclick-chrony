@@ -42,6 +42,7 @@ from a tarball).
 | Network | `systemd-networkd`, DHCP on Ethernet |
 | SSH | root by key only; host keys generated on first boot |
 | Hostname | `ntp250` |
+| Locale | `LANG=C.UTF-8` (`/etc/default/locale`; built into glibc, no `locales` package) |
 | Carrier GPIOs | named lines (`gpioinfo`); `ntp250-gpio-init.service` sets `gps-nreset`=1, `gps-reset`=0, `hdr-ppsout-en`=0 at boot |
 | GPS reset | `ntp250-gps-reset` (0.5 s pulse, as stock `cc_resetgps`) |
 | GPS config | `ntp250-gps-config.service` at every boot: factory reset, 115200, GPS+Galileo (no GLONASS/BeiDou), stationary, NMEA GGA/RMC/ZDA; see `NOTES.md` "GPS configuration" |
