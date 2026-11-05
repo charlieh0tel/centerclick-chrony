@@ -17,7 +17,7 @@ image/build.sh kernel image   # selected stages, in the order given
 | `uboot` | `build/u-boot-rockchip.bin` | `rock-pi-s-rk3308_defconfig`, `patches/u-boot/`, rkbin DDR init v1.26 and BL31 |
 | `kernel` | `build/kernel.tar` | arm64 `defconfig` + `kernel.config`, `patches/linux/`; DTB from `dts/rk3308-ntp250.dts` |
 | `rootfs` | `build/rootfs.tar` | `mmdebstrap` unshare mode; overlay `rootfs/overlay/`; `rootfs-setup.sh` |
-| `image` | `out/ntp250.img`, `out/ntp250.img.sha256` | GPT, U-Boot at sector 64, ext4 root at 16 MiB, ext4 data after root |
+| `image` | `out/ntp250.img`, `out/ntp250.img.sha256` | GPT, U-Boot at sector 64 in partition 3, ext4 root at 16 MiB, ext4 data after root |
 
 Runs unprivileged.  Host packages (Ubuntu): `gcc-aarch64-linux-gnu`,
 `bison`, `flex`, `swig`, `python3-pyelftools`, `libgnutls28-dev`,
@@ -32,10 +32,10 @@ from a tarball).
 
 | Item | Value |
 |---|---|
-| U-Boot | sector 64 (`u-boot-rockchip.bin`: idbloader + FIT) |
+| U-Boot | sector 64 (`u-boot-rockchip.bin`: idbloader + FIT), in GPT partition 3 `uboot`, type Linux reserved, sectors 64-32767, so `systemd-repart` does not discard it as free space |
 | Root partition | GPT partition 1, type root-arm64, sector 32768, 2048 MiB, PARTUUID `33f4c7e9-0436-473f-9913-48d960e86116`, legacy BIOS bootable; `/var/lib`, `/var/log` empty mount points |
 | Data partition | GPT partition 2 `data`, type linux-generic, after root, 512 MiB in the image, PARTUUID `21a10599-5390-427c-8790-0a84a983ba3c`; mounted on `/data`; `/data/var/lib` and `/data/var/log` bind-mounted on `/var/lib`, `/var/log`; no `nofail` |
-| First boot | `systemd-repart` (`/etc/repart.d/`) grows `data` to the end of the card, root fixed; `x-systemd.growfs` grows its ext4; `--discard=no` (`systemd-repart.service.d/ntp250.conf`), since discarding the gap before partition 1 zeroes U-Boot |
+| First boot | `systemd-repart` (`/etc/repart.d/`) grows `data` to the end of the card, root fixed; `x-systemd.growfs` grows its ext4 |
 | Boot config | `/boot/extlinux/extlinux.conf`, `/boot/Image`, `/boot/dtbs/rockchip/rk3308-ntp250.dtb` |
 | Carrier console | `ttyS2` (uart2, carrier micro-USB CH340N), 1500000 8N1: U-Boot from the autoboot prompt on, kernel (`earlycon` from the first message), root autologin |
 | Module console | `ttyS0` (uart0, module header 1 pins 8 TX, 10 RX, 6 GND), 1500000 8N1: DDR init, SPL, U-Boot, root autologin; no kernel log |

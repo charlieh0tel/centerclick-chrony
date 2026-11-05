@@ -22,8 +22,9 @@ readonly JOBS
 readonly AUTHORIZED_KEYS=${NTP250_AUTHORIZED_KEYS:-$HOME/.ssh/id_ed25519.pub}
 
 # Card layout in 512-byte sectors.  The RK3308 boot ROM loads U-Boot
-# (idbloader + FIT) from sector 64; the root partition starts at 16 MiB,
-# as on the stock card.  The data partition follows root; systemd-repart
+# (idbloader + FIT) from sector 64, inside partition 3 (uboot), so tools
+# that treat unpartitioned space as free (systemd-repart discards it) leave
+# it alone; the root partition starts at 16 MiB, as on the stock card.  The data partition follows root; systemd-repart
 # grows it to the end of the card on first boot.
 readonly UBOOT_SECTOR=64
 readonly ROOT_START_SECTOR=32768
@@ -227,13 +228,15 @@ stage_image() {
     mkdir -p "$OUT"
     rm -f "$part"
     truncate -s "${total_mib}M" "$part"
-    sgdisk --clear \
+    sgdisk --clear --set-alignment=1 \
         --new=1:"$ROOT_START_SECTOR":+"${ROOT_SIZE_MIB}M" \
         --typecode=1:8305 --change-name=1:root \
         --partition-guid=1:"$ROOT_PARTUUID" --attributes=1:set:2 \
         --new=2:"$data_start":+"${DATA_SIZE_MIB}M" \
         --typecode=2:8300 --change-name=2:data \
         --partition-guid=2:"$DATA_PARTUUID" \
+        --new=3:"$UBOOT_SECTOR":$(( ROOT_START_SECTOR - 1 )) \
+        --typecode=3:8301 --change-name=3:uboot \
         "$part" >/dev/null
     dd if="$rootimg" of="$part" bs=512 seek="$ROOT_START_SECTOR" \
         conv=notrunc,sparse status=none
