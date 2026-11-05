@@ -28,6 +28,22 @@ from a tarball).
 `NTP250_AUTHORIZED_KEYS` names the SSH public key installed for root
 (default `~/.ssh/id_ed25519.pub`).
 
+## Write a card
+
+```
+sudo image/flash.sh /dev/sdX chronos   # image, then site/chronos
+sudo image/flash.sh /dev/sdX           # image as built
+```
+
+Checks `out/ntp250.img.sha256`; refuses a device that is not a whole,
+removable, unmounted disk.  Confirm DEVICE with
+`lsblk -o NAME,SIZE,MODEL,SERIAL` first.  A site overlay is a tree
+rooted at `/`, copied onto the root partition owned by root.
+
+| Site | Contents |
+|---|---|
+| `site/chronos` | hostname `chronos`; `end0` 10.0.0.239/16, gateway 10.0.0.254, DNS 10.0.0.240, domain `murgatroid.com` (`05-site.network`, ahead of the image's DHCP); chrony `log tracking measurements statistics rtc refclocks tempcomp` |
+
 ## Image
 
 | Item | Value |
