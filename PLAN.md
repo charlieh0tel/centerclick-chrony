@@ -183,6 +183,7 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 - nftables firewall, with NOTRACK for UDP 123 as stock.
 - Default target multi-user; no getty on tty1.
 - U-Boot: boot extlinux without trying EFI first.
+- GNSS constellations: choose and set them (now GPS with QZSS, Galileo, SBAS; stock GPS, Galileo, GLONASS).
 - Maybe: saved clock for boots after power loss (RTC not backed).  A timer touches `/var/lib/systemd/timesync/clock` hourly and at shutdown while chrony is synchronized; systemd PID 1 starts the clock no earlier than its mtime.  Not the `fake-hwclock` package: its periodic save needs cron.
 - Unattended security updates.
 - README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.
