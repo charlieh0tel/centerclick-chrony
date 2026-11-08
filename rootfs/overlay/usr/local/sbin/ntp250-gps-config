@@ -19,12 +19,6 @@ apply() {
     }
 }
 
-# Hardware reset first: RESET_N erases the receiver's backed-up time, so
-# it reports no time until a fix rather than its own drifted clock
-# (NOTES.md "GPS configuration").
-ntp250-gps-reset
-sleep 1
-
 # Factory defaults from either speed (only one gets through); afterwards
 # the receiver runs at 9600.
 ubx -s 115200 -p RESET >/dev/null 2>&1 || true
