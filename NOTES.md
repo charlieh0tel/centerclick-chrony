@@ -137,6 +137,7 @@ return `UBX-ACK-ACK`, or the service fails.
 
 | Setting | Value | ubxtool | Reason |
 |---|---|---|---|
+| Backed-up time | erased | `ntp250-gps-reset` (RESET_N pulse), then 1 s | Without it, before a fix the receiver reports its own clock's time, kept by the supercap and drifted while off (measured 0.13 s and about 1 s); RESET_N "erases the time information in the BBR" (`third_party/u-blox/`, UBX-15030059 R06, 3.3, p. 20); checked 2026-11-08: first RMC after the pulse has no time (`$GNRMC,,V,...`), fix 26 s after the service started, so ephemeris survived |
 | Start state | factory defaults | `-p RESET` at 115200 and at 9600 | No leftovers (gpsd without `-b` had disabled RMC/GGA and saved it) |
 | UART1 speed | 115200 | `-s 9600 -S 115200` | Lower NMEA latency; stock used 115200 |
 | GNSS | GPS (with QZSS), Galileo, SBAS on; GLONASS, BeiDou off | `-e GPS -e GALILEO -d GLONASS -d BEIDOU` | Owner's choice: no GLONASS |
@@ -151,6 +152,12 @@ Readback on 2026-11-02 (`ubxtool -p CFG-GNSS`, `CFG-NAV5`, `CFG-PRT,1`,
 
 gpsd: `-n -b -s 115200 /dev/ttyS1` (`/etc/default/gpsd`); `-b` keeps it
 from reconfiguring the receiver.
+
+Before a fix (RMC status `V`), NMEA carries the receiver's time once it
+has one; the CFG-NMEA filter only drops time the receiver calls invalid,
+and its own clock's time counts as valid.  The timepulse starts only at
+the fix (TP5 "none until locked"): boot capture 2026-11-08, first PPS
+1.1 s after the first RMC `A`.
 
 Measured: NMEA offset +161 ms at 9600 with all default sentences, +33 to
 +48 ms at 115200 with GGA/RMC/ZDA (1 h median +43 ms, drifting +40 to
@@ -264,6 +271,7 @@ stable per SoC.  No EEPROM on this carrier, so no other source.
 |---|---|---|
 | gpsd | `-n -G -s 115200 -f 8N1` on `/dev/gps0` | `rootfs/etc/default/gpsd` |
 | GPS baud | 9600 default, switched to 115200 with `ubxtool -S 115200` | `rootfs/usr/sbin/cc_gpsconfig` |
+| GPS reset | none at boot; `cc_resetgps` (RESET_N pulse) only before the V2 upgrade reboot and from the console menu; `cc_monitor` `gps_reset` unused | `rootfs/usr/sbin/cc_resetgps`, `cc_partition:264`, `cc_console:3156`, `cc_monitor:403` |
 | GNSS | GPS, Galileo, GLONASS on, BeiDou off (`ubxtool -e`/`-d` at every boot); no other u-blox settings, no `SAVE`; live receiver config not read back before ours | `rootfs/usr/sbin/cc_gpsconfig`, `rootfs/usr/share/cc/env` |
 | ntpd PPS | driver 22 (`127.127.22.0`), `flag3 1`, `time1 0.000010` | `rootfs/etc/ntp.conf` |
 
