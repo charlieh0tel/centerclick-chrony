@@ -264,6 +264,7 @@ stable per SoC.  No EEPROM on this carrier, so no other source.
 |---|---|---|
 | gpsd | `-n -G -s 115200 -f 8N1` on `/dev/gps0` | `rootfs/etc/default/gpsd` |
 | GPS baud | 9600 default, switched to 115200 with `ubxtool -S 115200` | `rootfs/usr/sbin/cc_gpsconfig` |
+| GNSS | GPS, Galileo, GLONASS on, BeiDou off (`ubxtool -e`/`-d` at every boot); no other u-blox settings, no `SAVE`; live receiver config not read back before ours | `rootfs/usr/sbin/cc_gpsconfig`, `rootfs/usr/share/cc/env` |
 | ntpd PPS | driver 22 (`127.127.22.0`), `flag3 1`, `time1 0.000010` | `rootfs/etc/ntp.conf` |
 
 ## Mainline support
