@@ -7,7 +7,6 @@
 
 /dts-v1/;
 
-#include <dt-bindings/input/input.h>
 #include "rk3308-rock-pi-s.dts"
 
 / {
@@ -24,7 +23,7 @@
 		led-system {
 			label = "ntp250:green:system";
 			gpios = <&gpio2 RK_PA7 GPIO_ACTIVE_HIGH>;
-			linux,default-trigger = "heartbeat";
+			linux,default-trigger = "timer";
 		};
 
 		led-sd {
@@ -37,19 +36,6 @@
 			label = "ntp250:green:ntp";
 			gpios = <&gpio2 RK_PB5 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
-		};
-	};
-
-	gpio-keys {
-		compatible = "gpio-keys";
-		pinctrl-names = "default";
-		pinctrl-0 = <&button_front_pin>;
-
-		/* SW1: high while pressed, pulled down when idle (measured). */
-		button-front {
-			label = "front";
-			linux,code = <KEY_PROG1>;
-			gpios = <&gpio2 RK_PB1 GPIO_ACTIVE_HIGH>;
 		};
 	};
 
@@ -185,10 +171,6 @@
 	ntp250 {
 		pps_pin: pps-pin {
 			rockchip,pins = <2 RK_PB6 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-
-		button_front_pin: button-front-pin {
-			rockchip,pins = <2 RK_PB1 RK_FUNC_GPIO &pcfg_pull_down>;
 		};
 
 		rtc_int: rtc-int {

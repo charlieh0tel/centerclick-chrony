@@ -1,0 +1,11 @@
+[Unit]
+Description=NTP250 front panel (system and NTP LEDs, SW1 button)
+After=chrony.service
+
+[Service]
+ExecStart=/usr/local/sbin/ntp250-panel
+Restart=on-failure
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

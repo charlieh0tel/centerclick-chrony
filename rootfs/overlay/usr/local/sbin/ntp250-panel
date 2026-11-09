@@ -1,0 +1,137 @@
+#!/bin/sh
+# Front panel: the system and NTP LEDs and the SW1 button, with the
+# rules of stock cc_monitor (NOTES.md "Stock LEDs and button"), ntpd
+# replaced by chrony.  Status every 5 s, button every 0.5 s.
+set -eu
+
+leds=/sys/class/leds/ntp250:green
+# SW1 sample period and the status period, in samples.
+sample=0.5
+status_every=10
+# Limits from stock: SoC 135 F in millidegrees C; PPS jitter 0.1 ms in
+# ns; DC good 7-14 V in mV, below 3 V reads as 0; ADC mV per 1000 counts
+# (62k/8.2k divider, 1.8 V 10 bit).
+temp_max_mc=57222
+jitter_max_ns=100000
+dc_min_mv=7000
+dc_max_mv=14000
+dc_floor_mv=3000
+adc_uv_per_count=15067
+adc=/sys/bus/iio/devices/iio:device0/in_voltage0_raw
+
+# The state last set on each LED: off, on, blink; empty: unknown.
+state_system=''
+state_ntp=''
+
+# led system|ntp off|on|blink: set an LED unless already in that state
+# (setting the timer trigger again restarts the blink).
+led() {
+    case $1 in
+    system) cur=$state_system ;;
+    ntp) cur=$state_ntp ;;
+    esac
+    [ "$cur" = "$2" ] && return 0
+    case $2 in
+    off) echo none >"$leds:$1/trigger"; echo 0 >"$leds:$1/brightness" ;;
+    on) echo none >"$leds:$1/trigger"; echo 1 >"$leds:$1/brightness" ;;
+    blink) echo timer >"$leds:$1/trigger" ;;
+    esac
+    case $1 in
+    system) state_system=$2 ;;
+    ntp) state_ntp=$2 ;;
+    esac
+}
+
+# ntp_state: off, blink or on, from chrony.
+ntp_state() {
+    tracking=$(chronyc -n -c tracking) || { echo off; return; }
+    ref=$(echo "$tracking" | cut -d, -f2)
+    stratum=$(echo "$tracking" | cut -d, -f3)
+    leap=$(echo "$tracking" | cut -d, -f14)
+    if [ "$leap" = "Not synchronised" ]; then
+        echo off
+    elif [ "$ref" != PPS ]; then
+        if [ "$stratum" -lt 8 ]; then echo blink; else echo off; fi
+    else
+        jitter=$(chronyc -n -c sourcestats | awk -F, '$1 == "PPS" { printf "%d", $8 * 1e9 }')
+        if [ "${jitter:-$jitter_max_ns}" -gt "$jitter_max_ns" ]; then
+            echo blink
+        else
+            echo on
+        fi
+    fi
+}
+
+# system_good: SoC temperature, power and network all good.
+system_good() {
+    [ "$(cat /sys/class/thermal/thermal_zone0/temp)" -lt "$temp_max_mc" ] || return 1
+    good=0
+    bad=0
+    if [ "$(gpioget --numeric barrel-mech)" = 1 ]; then
+        mv=$(( $(cat "$adc") * adc_uv_per_count / 1000 ))
+        [ "$mv" -ge "$dc_floor_mv" ] || mv=0
+        if [ "$mv" -ge "$dc_min_mv" ] && [ "$mv" -le "$dc_max_mv" ]; then
+            good=$((good + 1))
+        else
+            bad=$((bad + 1))
+        fi
+    fi
+    [ "$(gpioget --numeric poe-sense)" = 1 ] && good=$((good + 1))
+    [ "$good" -gt 0 ] && [ "$bad" -eq 0 ] || return 1
+    ip -o link show end0 | grep -q LOWER_UP || return 1
+    ip -o addr show dev end0 | grep -v ' fe80:' | grep -q ' inet6\? '
+}
+
+# flash: both LEDs off and on 5 times, 25 ms each, then back to state.
+flash() {
+    for _ in 1 2 3 4 5; do
+        for name in system ntp; do
+            echo none >"$leds:$name/trigger"
+            echo 0 >"$leds:$name/brightness"
+        done
+        sleep 0.025
+        for name in system ntp; do echo 1 >"$leds:$name/brightness"; done
+        sleep 0.025
+    done
+    s=$state_system n=$state_ntp
+    state_system=''
+    state_ntp=''
+    led system "$s"
+    led ntp "$n"
+}
+
+# released N: act on a release after N pressed samples.
+released() {
+    if [ "$1" -gt 34 ]; then
+        :
+    elif [ "$1" -gt 28 ]; then
+        echo "ntp250-panel: factory reset (none here)" >&2
+    elif [ "$1" -gt 16 ]; then
+        systemctl reboot
+    elif [ "$1" -gt 6 ]; then
+        systemctl poweroff
+    fi
+}
+
+led system blink
+led ntp off
+pressed=0
+tick=0
+while :; do
+    if [ $((tick % status_every)) -eq 0 ]; then
+        led ntp "$(ntp_state)"
+        if system_good; then led system on; else led system blink; fi
+    fi
+    tick=$((tick + 1))
+
+    if [ "$(gpioget --numeric -b pull-down button-front)" = 1 ]; then
+        pressed=$((pressed + 1))
+        case $pressed in
+        5 | 6 | 13 | 14 | 15 | 16 | 2[3-8] | 35) flash ;;
+        esac
+    elif [ "$pressed" -gt 0 ]; then
+        released "$pressed"
+        pressed=0
+    fi
+    sleep "$sample"
+done

@@ -60,6 +60,7 @@ rooted at `/`, copied onto the root partition owned by root.
 | Hostname | `ntp250` |
 | Locale | `LANG=C.UTF-8` (`/etc/locale.conf`; Debian tmpfiles links `/etc/default/locale` to it; built into glibc, no `locales` package) |
 | Carrier GPIOs | named lines (`gpioinfo`); `ntp250-gpio-init.service` sets `gps-nreset`=1, `gps-reset`=0, `hdr-ppsout-en`=0 at boot |
+| Front panel | `ntp250-panel.service`: system and NTP LEDs and button SW1 with the stock rules (`NOTES.md` "Stock LEDs and button"), chrony in place of ntpd (NTP on: synced to PPS with PPS std dev <= 0.1 ms; blink: higher, or another source at stratum < 8; off: not synced); hold SW1 > 3 s: power off (halts; BL31 `rockchip_soc_system_off: Not supported!`, power stays on until unplugged), > 8 s: reboot; > 14 s: nothing (stock factory reset); DTS default triggers: system `timer`, SD `mmc1`, NTP off |
 | GPS reset | `ntp250-gps-reset` (0.5 s pulse, as stock `cc_resetgps`) |
 | GPS config | `ntp250-gps-config.service` at every boot: factory reset, 115200, GPS+Galileo (no GLONASS/BeiDou), stationary, NMEA GGA/RMC/ZDA; see `NOTES.md` "GPS configuration" |
 | GPS daemon | `gpsd -n -b -s 115200 /dev/ttyS1` (`/etc/default/gpsd`), after `ntp250-gps-config` |
