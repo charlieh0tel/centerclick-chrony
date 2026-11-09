@@ -83,7 +83,7 @@ Source: `boot/boot.scr`.
 
 ## Pin map
 
-Sources: `stock/ntp250.dts` (decompiled from
+Our image: `gpios.md`.  Sources: `stock/ntp250.dts` (decompiled from
 `boot/rk3308-rock-pi-s-chronos.dtb`, the DTB `boot.scr` loads; no
 overlays are applied); module header pins from Radxa
 `docs.radxa.com/en/rockpi/rockpis/hardware/pin-gpio` (header 1 is pins
