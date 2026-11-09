@@ -168,7 +168,10 @@ captures 2026-11-08 (raw NMEA from gpsd, `/sys/class/pps/pps0/assert`):
   With the reset, first PPS 108 s after power-up; without, 12 s.
 - The timepulse starts only once the time is right (TP5 "none until
   locked"): first PPS 1.1 s after the first RMC `A` without reset, 1.1 s
-  after the leap second correction with.  PPS (`lock NMEA`) takes the
+  after the leap second correction with.  Cold start (UBX-CFG-RST
+  0xffff, all BBR nav data cleared), 2026-11-08: RMC `A` 60 s after the
+  reset, 1 s ahead (`leapS 17`) for 138 s; NAV-TIMEGPS `leapS 18`, valid
+  x7 at 198 s; first PPS 1 s later.  PPS (`lock NMEA`) takes the
   second from the latest NMEA sample, so it lands on the right second;
   NMEA alone is `noselect`.
 
