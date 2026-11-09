@@ -9,13 +9,13 @@ GPIO lines in our image (`dts/rk3308-ntp250.dts` on
 
 | Line | Pin | Module pin | Name | Direction, owner | Idle state | Role |
 |---|---|---|---|---|---|---|
-| gpiochip0 15 | GPIO0_B7 | 11 | `barrel-mech` | input, free | 1 with the DC plug in, 0 out | `ntp250-panel` power status |
+| gpiochip0 15 | GPIO0_B7 | 11 | `barrel-mech` | input, free | 0 = no DC plug, 1 = DC plug in (read 1 with the plug in) | `ntp250-panel` power status |
 | gpiochip0 17 | GPIO0_C1 | 15 | `rtc-int` | input, IRQ of `pcf8563`; pull-up | 1 (alarm active low) | RTC interrupt |
 | gpiochip2 4 | GPIO2_A4 | 7 | `hdr-ppsout-en` | output, free | 0 (`ntp250-gpio-init`) | header PPS output enable; off |
 | gpiochip2 5 | GPIO2_A5 | 12 | `led-sd` | output, LED `ntp250:green:sd` | trigger `mmc1` | SD activity |
 | gpiochip2 7 | GPIO2_A7 | 22 | `led-system` | output, LED `ntp250:green:system` | on; DTS default trigger `timer` (blink) until `ntp250-panel` runs | `ntp250-panel`: on if SoC temperature, power and network good, else blink |
-| gpiochip2 9 | GPIO2_B1 | 18 | `button-front` | input, free; pull-down set by `ntp250-panel` (`gpioget -b pull-down`) | 0; 1 while SW1 pressed | `ntp250-panel`, sampled every 0.5 s: hold > 3 s power off, > 8 s reboot |
-| gpiochip2 10 | GPIO2_B2 | 16 | `poe-sense` | input, free | 1 with PoE power, 0 without | `ntp250-panel` power status |
+| gpiochip2 9 | GPIO2_B1 | 18 | `button-front` | input, free; pull-down set by `ntp250-panel` (`gpioget -b pull-down`) | 0 = released, 1 = pressed | `ntp250-panel`, sampled every 0.5 s: hold > 3 s power off, > 8 s reboot |
+| gpiochip2 10 | GPIO2_B2 | 16 | `poe-sense` | input, free | 0 = no PoE, 1 = PoE power good (stock `cc_monitor`; read 0 without PoE, 1 not yet seen) | `ntp250-panel` power status |
 | gpiochip2 13 | GPIO2_B5 | 28 | `led-ntp` | output, LED `ntp250:green:ntp` | on when synced to PPS; DTS default off | `ntp250-panel`: on (PPS, std dev <= 0.1 ms), blink (higher, or other source stratum < 8), off (not synced) |
 | gpiochip2 14 | GPIO2_B6 | 30 | `gps-pps` | input, IRQ of `pps-gpio` (`/dev/pps0`); pull none | 0; 100 ms high each second once locked | GPS timepulse, assert edge to chrony |
 | gpiochip2 15 | GPIO2_B7 | 32 | `gps-nreset` | output, free | 1 (`ntp250-gpio-init`) | GPS RESET_N; `ntp250-gps-reset` drives 0 for 0.5 s |
