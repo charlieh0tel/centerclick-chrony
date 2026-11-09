@@ -291,6 +291,46 @@ stable per SoC.  No EEPROM on this carrier, so no other source.
 | GNSS | GPS, Galileo, GLONASS on, BeiDou off (`ubxtool -e`/`-d` at every boot); no other u-blox settings, no `SAVE`; live receiver config not read back before ours | `rootfs/usr/sbin/cc_gpsconfig`, `rootfs/usr/share/cc/env` |
 | ntpd PPS | driver 22 (`127.127.22.0`), `flag3 1`, `time1 0.000010` | `rootfs/etc/ntp.conf` |
 
+## Stock LEDs and button
+
+Source: `rootfs/usr/sbin/cc_monitor` (Perl, POE): status every 5 s,
+button every 0.5 s; LEDs through `/sys/class/leds/green:*`.  Unit
+settings: `SKU=NTP250`, `SN=203`, `HASPOE=true` (data partition
+`/board/env`); `HASDC1=true` (`rootfs/usr/share/cc/env`); hardware rev
+10 from the SN, so DC mechanical sense and DC range 7-14 V.
+
+| LED state | Trigger, brightness |
+|---|---|
+| off | `none`, 0 |
+| on | `none`, 1 |
+| blink | `timer` (500 ms on, 500 ms off) |
+| double | `heartbeat` (unused) |
+
+| LED | Rule (first match) | At start |
+|---|---|---|
+| `ntp` | ntpd source not PPS: blink if stratum < 8, else off; PPS and ntpd `clock jitter` > 0.1 ms: blink; else on | off |
+| `system` | blink if SN 999, SoC temperature >= 135 F (57.2 C, `thermal_zone0`), power yellow, or network not good; else on | blink |
+| `sd` | kernel trigger `mmc0` (DTB) | |
+
+| Input | Rule |
+|---|---|
+| Network | good: `eth0` `LOWER_UP` and an address other than `fe80:` |
+| DC | `barrel-mech` 0: disconnected (not counted); else SARADC ch0 `in_voltage0_raw` x 0.015067 V (62k/8.2k divider, 1.8 V 10 bit), below 3 V read as 0; 7-14 V good, else bad |
+| PoE | `poe-sense` 1: good |
+| Power | yellow if no input good or any bad |
+
+Button SW1 (`fp-button-1`, 1 while pressed), sampled every 0.5 s; n
+counts consecutive pressed samples.  While held, in each action's
+window the `system` and `ntp` LEDs flash 5 times (25 ms off, 25 ms on)
+per sample, then return to their state.  On release:
+
+| n (held) | Flash window | Action |
+|---|---|---|
+| 7-16 (> 3 s) | n 5-6 | `poweroff` |
+| 17-28 (> 8 s) | n 13-16 | `reboot` |
+| 29-34 (> 14 s) | n 23-28 | `cc_defaults` (factory reset), `reboot` |
+| > 34 (> 17 s) | n 35 | none |
+
 ## Mainline support
 
 Checked against Linux, U-Boot and TF-A `master` on 2026-11-01.
