@@ -18,8 +18,8 @@ GPIO lines in our image (`dts/rk3308-ntp250.dts` on
 | gpiochip2 10 | GPIO2_B2 | 16 | `poe-sense` | input, free | 0 = no PoE, 1 = PoE power good (stock `cc_monitor`; read 0 without PoE, 1 not yet seen) | `ntp250-panel` power status |
 | gpiochip2 13 | GPIO2_B5 | 28 | `led-ntp` | output, LED `ntp250:green:ntp` | on when synced to PPS; DTS default off | `ntp250-panel`: on (PPS, std dev <= 0.1 ms), blink (higher, or other source stratum < 8), off (not synced) |
 | gpiochip2 14 | GPIO2_B6 | 30 | `gps-pps` | input, IRQ of `pps-gpio` (`/dev/pps0`); pull none | 0; 100 ms high each second once locked | GPS timepulse, assert edge to chrony |
-| gpiochip2 15 | GPIO2_B7 | 32 | `gps-nreset` | output, free | 1 (`ntp250-gpio-init`) | GPS RESET_N; `ntp250-gps-reset` drives 0 for 0.5 s |
-| gpiochip2 16 | GPIO2_C0 | 34 | `gps-reset` | output, free | 0 (`ntp250-gpio-init`) | `ntp250-gps-reset` drives 1 during the pulse |
+| gpiochip2 15 | GPIO2_B7 | 32 | `gps-nreset` | output, free | 1 (`ntp250-gpio-init`) | GPS reset, active low: 0 for 0.5 s alone resets the receiver (u-blox boot banner, 2026-11-09); `ntp250-gps-reset` drives 0 for 0.5 s |
+| gpiochip2 16 | GPIO2_C0 | 34 | `gps-reset` | output, free | 0 (`ntp250-gpio-init`) | no effect seen: 1 for 0.5 s alone, no banner, RMC uninterrupted (2026-11-09); stock drives it 1 during the pulse; `ntp250-gps-reset` too |
 
 "Free": no driver or process holds the line; outputs keep the level
 `gpioset -t 0` left.  `gpioget` on a free output makes it an input.
