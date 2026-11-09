@@ -177,7 +177,7 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 
 ## Phase 6: Polish
 
-- LED semantics: PPS LED blinks on each assert; NTP LED is lit when chrony is synced.
+- Button factory reset (SW1 held > 14 s; stock `cc_defaults`): define what it resets; now a no-op.
 - Read-only root, or overlayfs, to protect the SD card.
 - SD write rate of chronymon and chrony logging (`log refclocks` writes one line per second).
 - nftables firewall, with NOTRACK for UDP 123 as stock.
