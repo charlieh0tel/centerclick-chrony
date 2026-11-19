@@ -53,6 +53,7 @@ rooted at `/`, copied onto the root partition owned by root.
 | Data partition | GPT partition 2 `data`, type linux-generic, after root, 512 MiB in the image, PARTUUID `21a10599-5390-427c-8790-0a84a983ba3c`; mounted on `/data`; `/data/var/lib` and `/data/var/log` bind-mounted on `/var/lib`, `/var/log`; no `nofail` |
 | First boot | `systemd-repart` (`/etc/repart.d/`) grows `data` to the end of the card, root fixed; `x-systemd.growfs` grows its ext4 |
 | Boot config | `/boot/extlinux/extlinux.conf`, `/boot/Image`, `/boot/dtbs/rockchip/rk3308-ntp250.dtb` |
+| Boot target | `multi-user.target`; no `getty@tty1` (no display) |
 | Carrier console | `ttyS2` (uart2, carrier micro-USB CH340N), 1500000 8N1: U-Boot from the autoboot prompt on, kernel (`earlycon` from the first message), root autologin |
 | Module console | `ttyS0` (uart0, module header 1 pins 8 TX, 10 RX, 6 GND), 1500000 8N1: DDR init, SPL, U-Boot, root autologin; no kernel log |
 | Network | `systemd-networkd`, DHCP on Ethernet |
