@@ -179,7 +179,7 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 
 - Button factory reset (SW1 held > 14 s; stock `cc_defaults`): define what it resets; now a no-op.
 - Read-only root, or overlayfs, to protect the SD card.
-- SD write rate of chronymon and chrony logging (`log refclocks` writes one line per second).
+- SD writes: 3.4 GB/day, 87% chronymond (NOTES.md "SD writes"); chronymond's write rate is with chronymon.
 - nftables firewall, with NOTRACK for UDP 123 as stock.
 - Default target multi-user; no getty on tty1.
 - U-Boot: boot extlinux without trying EFI first.

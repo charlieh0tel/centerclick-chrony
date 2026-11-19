@@ -193,6 +193,27 @@ coefficients zero.
 | PPS std dev (`statistics.log`) | mean 535 ns, max 2.5 us; 8% of updates at 1 us or more, spread over all hours | under 1 us |
 | Clients | 8 LAN hosts, no drops | sync to the box |
 
+## SD writes
+
+Measured on chronos 2026-11-09 18:31 to 2026-11-19 00:25 UTC (798808 s,
+9.25 days, no reboot): `/sys/block/mmcblk1/mmcblk1p*/stat` field 7
+(512-byte sectors written), `/proc/<pid>/io` `write_bytes`.  chrony
+`log tracking measurements statistics rtc refclocks tempcomp`;
+chronymond with `CHRONYMOND_PPS=/dev/pps0`, `CHRONYMOND_GPSD=localhost`,
+otherwise defaults (1 s poll, 10 s log reads).
+
+| Writer | Total | Per day |
+|---|---|---|
+| data partition (`mmcblk1p2`) | 31.2 GB | 3.38 GB |
+| root partition (`mmcblk1p1`) | 243 MB | 26 MB |
+| chronymond 1.4.4 (running 9.13 days) | 26.8 GB | 2.94 GB |
+| data ext4 journal (`jbd2/mmcblk1p2-8`) | 613 MB | 66 MB |
+| chronyd | 508 MB | 55 MB |
+
+chronymond is 87% of data partition writes.  Its database grows far
+less than it writes: 159 MB on 2026-11-09, 545 MB on 2026-11-19 (about
+42 MB/day).  First 30 min with chronymond 1.4.3: 3.1 GB/day.
+
 ## Power-loss holdover
 
 Test 2026-11-03: unit powered about 9 h (supercap charged), then all
