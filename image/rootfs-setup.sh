@@ -48,10 +48,13 @@ chmod 600 /root/.ssh/authorized_keys
 # so no two cards share them.
 rm -f /etc/ssh/ssh_host_*
 
+# Site firewall rules (/etc/nftables.conf includes them).
+mkdir -p /etc/nftables.d
+
 depmod -a "$(ls /usr/lib/modules)"
 
 systemctl enable systemd-networkd systemd-resolved \
     ntp250-ssh-hostkeys.service ntp250-gpio-init.service \
     ntp250-gps-config.service gpsd.service ntp250-tuning.service \
-    ntp250-panel.service \
+    ntp250-panel.service nftables.service \
     serial-getty@ttyS0.service serial-getty@ttyS2.service
