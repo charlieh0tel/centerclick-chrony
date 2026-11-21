@@ -1,2 +1,0 @@
-# chronymon-web.
-add rule inet filter input tcp dport 8323 accept
