@@ -65,6 +65,7 @@ rooted at `/`, copied onto the root partition owned by root.
 | GPS config | `ntp250-gps-config.service` at every boot: factory reset, 115200, GPS+Galileo (no GLONASS/BeiDou), stationary, NMEA GGA/RMC/ZDA; see `NOTES.md` "GPS configuration" |
 | GPS daemon | `gpsd -n -b -s 115200 /dev/ttyS1` (`/etc/default/gpsd`), after `ntp250-gps-config` |
 | chrony | `/etc/chrony/conf.d/ntp250.conf`: SHM 0 `NMEA` (noselect, offset 0.043), `/dev/pps0` `PPS` locked to NMEA, preferred; Debian pool as sanity sources; serves NTP to all; `tempcomp` |
+| Monitoring | chronymon from `https://charlieh0tel.github.io/apt-repo` (`image/apt/charlieh0tel.sources`, key embedded, fingerprint A913 FC70 9FC0 4F20 2A4E ECF4 77CD 3854 7561 F4EC); `chronymond`: PPS `/dev/pps0`, gpsd `localhost`, commit every 120 s (`/etc/default/chronymond`); `chronymon-web` on `0.0.0.0:8323`; database `/var/lib/chronymon/` |
 | Temperature | chrony `tempcomp` reads `thermal_zone0` (SoC logic TSADC); coefficients zero; see `NOTES.md` "Temperature" |
 | Journal | volatile, `/run/log/journal`, at most 32 MiB (`journald.conf.d/ntp250.conf`) |
 | Watchdog | `dw_wdt` `/dev/watchdog0`, systemd `RuntimeWatchdogSec=30s` (`system.conf.d/ntp250.conf`) |

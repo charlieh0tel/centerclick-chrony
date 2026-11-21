@@ -60,6 +60,8 @@ readonly PACKAGES=(
     bind9-dnsutils traceroute netcat-openbsd tcpdump
     # time and GPS
     chrony gpsd gpsd-tools python3-gps python3-serial pps-tools
+    # monitoring, from image/apt/charlieh0tel.sources
+    chronymon
     # hardware
     gpiod i2c-tools
 )
@@ -181,6 +183,8 @@ stage_rootfs() {
     # shellcheck disable=SC2016 # mmdebstrap expands $1 in hooks.
     mmdebstrap --mode=unshare --variant=minbase --architectures=arm64 \
         --keyring="$DEBIAN_KEYRING" --include="$include" \
+        --setup-hook='mkdir -p "$1/etc/apt/sources.list.d"' \
+        --setup-hook="upload '$ROOT/image/apt/charlieh0tel.sources' /etc/apt/sources.list.d/charlieh0tel.sources" \
         --customize-hook="tar-in '$BUILD/overlay.tar' /" \
         --customize-hook="tar-in '$BUILD/kernel.tar' /" \
         --customize-hook="upload '$AUTHORIZED_KEYS' /root/.ssh/authorized_keys" \
