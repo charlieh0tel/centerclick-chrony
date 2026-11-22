@@ -57,7 +57,7 @@ rooted at `/`, copied onto the root partition owned by root.
 | Module console | `ttyS0` (uart0, module header 1 pins 8 TX, 10 RX, 6 GND), 1500000 8N1: DDR init, SPL, U-Boot, root autologin; no kernel log |
 | Network | `systemd-networkd`, DHCP on Ethernet |
 | SSH | root by key only; host keys generated on first boot |
-| Firewall | `nftables.service`, `/etc/nftables.conf`: input drop except loopback, replies, ICMP/ICMPv6, NTP (UDP 123), SSH, chronymon-web (TCP 8323), DHCP/DHCPv6 client; UDP 123 not connection tracked (stock NOTRACK); output and forward: accept, drop; site rules in `/etc/nftables.d/*.nft`; kernel `NF_TABLES`, `NF_TABLES_INET`, `NFT_CT`, `NF_CONNTRACK` built in |
+| Firewall | `nftables.service`, `/etc/nftables.conf`: input drop except loopback, replies, ICMP/ICMPv6, NTP (UDP 123), SSH, chronymon-web (TCP 8323), mDNS (UDP 5353), DHCP from port 67, DHCPv6 from `fe80::/10` port 547, chain `site`; the rest counted (`dropped by policy`) and dropped; UDP 123 not connection tracked (stock NOTRACK); output and forward: accept, drop; site rules in `/etc/nftables.d/*.nft`, added to chain `inet filter site`; kernel `NF_TABLES`, `NF_TABLES_INET`, `NFT_CT`, `NF_CONNTRACK` built in |
 | Hostname | `ntp250` |
 | Locale | `LANG=C.UTF-8` (`/etc/locale.conf`; Debian tmpfiles links `/etc/default/locale` to it; built into glibc, no `locales` package) |
 | Carrier GPIOs | named lines (`gpioinfo`); `ntp250-gpio-init.service` sets `gps-nreset`=1, `gps-reset`=0, `hdr-ppsout-en`=0 at boot |
