@@ -1,0 +1,13 @@
+// NTP250 additions to 50unattended-upgrades (Debian stable, point
+// releases and security): also stable-updates.  Not charlieh0tel.
+Unattended-Upgrade::Origins-Pattern {
+        "origin=Debian,codename=${distro_codename}-updates,label=Debian";
+};
+// Keep our overlay's versions of changed conffiles (/etc/default/chrony,
+// /etc/default/gpsd) instead of holding the package back.
+Dpkg::Options {
+        "--force-confdef";
+        "--force-confold";
+};
+// Never reboot on its own: a reboot loses PPS lock.
+Unattended-Upgrade::Automatic-Reboot "false";

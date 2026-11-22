@@ -182,9 +182,7 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 - SD writes: 3.4 GB/day, 87% chronymond (NOTES.md "SD writes"); chronymond's write rate is with chronymon.
 - U-Boot: boot extlinux without trying EFI first.
 - GNSS constellations: choose and set them (now GPS with QZSS, Galileo, SBAS; stock GPS, Galileo, GLONASS).
-- Unattended upgrades: all Debian origins (not charlieh0tel).
-- Firewall tidy: DHCP rules pinned to server ports, counter on drops, UDP 5353.
-- Kernel as a .deb (`bindeb-pkg`, DTS as a patch) in a separate component of the charlieh0tel repo; `u-boot-menu` writes `extlinux.conf`; manual upgrades, spare board first.
+- Kernel as a .deb (`bindeb-pkg`, DTS as a patch) in apt-repo `main`, built and released by CI; `u-boot-menu` writes `extlinux.conf`; manual upgrades, spare board first.
 - README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.
 
 ## Upstream (ask first)
