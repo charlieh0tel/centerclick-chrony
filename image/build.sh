@@ -60,6 +60,8 @@ readonly PACKAGES=(
     bind9-dnsutils traceroute netcat-openbsd tcpdump
     # time and GPS
     chrony gpsd gpsd-tools python3-gps python3-serial pps-tools
+    # updates
+    unattended-upgrades
     # hardware
     gpiod i2c-tools
 )

@@ -1,0 +1,3 @@
+// Daily package list update and unattended upgrade (apt-daily*.timer).
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
