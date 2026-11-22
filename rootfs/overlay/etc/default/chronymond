@@ -1,0 +1,12 @@
+# Settings for chronymond (`chronymond --help`); unset ones take the
+# built-in defaults.
+
+# Commit every 120 s rather than the default 30 s: fewer SD card writes
+# (NOTES.md "SD writes").  Events still commit within 5 s.
+CHRONYMOND_COMMIT_INTERVAL=120
+
+# Watch the GPS PPS for missed edges.
+CHRONYMOND_PPS=/dev/pps0
+
+# Record gpsd's fix and satellites.
+CHRONYMOND_GPSD=localhost
