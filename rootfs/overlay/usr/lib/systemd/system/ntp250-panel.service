@@ -3,7 +3,7 @@ Description=NTP250 front panel (system and NTP LEDs, SW1 button)
 After=chrony.service
 
 [Service]
-ExecStart=/usr/local/sbin/ntp250-panel
+ExecStart=/usr/sbin/ntp250-panel
 Restart=on-failure
 Nice=10
 

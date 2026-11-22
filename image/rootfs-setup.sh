@@ -48,7 +48,7 @@ chmod 600 /root/.ssh/authorized_keys
 # so no two cards share them.
 rm -f /etc/ssh/ssh_host_*
 
-# Site firewall rules (/etc/nftables.conf includes them).
+# Site firewall rules (/usr/lib/ntp250/nftables.conf includes them).
 mkdir -p /etc/nftables.d
 
 depmod -a "$(ls /usr/lib/modules)"

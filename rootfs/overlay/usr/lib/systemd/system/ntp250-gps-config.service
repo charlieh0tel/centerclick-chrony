@@ -7,7 +7,7 @@ Before=gpsd.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/local/sbin/ntp250-gps-config
+ExecStart=/usr/sbin/ntp250-gps-config
 
 [Install]
 WantedBy=multi-user.target
