@@ -16,7 +16,8 @@ image/build.sh kernel image   # selected stages, in the order given
 | `fetch` | `build/dl/` | pinned downloads, SHA-256 checked (`sources.sh`) |
 | `uboot` | `build/u-boot-rockchip.bin` | `rock-pi-s-rk3308_defconfig`, `patches/u-boot/`, rkbin DDR init v1.26 and BL31 |
 | `kernel` | `build/kernel.tar` | arm64 `defconfig` + `kernel.config`, `patches/linux/`; DTB from `dts/rk3308-ntp250.dts` |
-| `rootfs` | `build/rootfs.tar` | `mmdebstrap` unshare mode; overlay `rootfs/overlay/`; `rootfs-setup.sh` |
+| `config` | `build/deb/ntp250-config_VERSION_all.deb`, `build/ntp250-config.deb` (link) | `package/build-ntp250-config.sh` (`package/README.md`) |
+| `rootfs` | `build/rootfs.tar` | `mmdebstrap` unshare mode; installs `build/ntp250-config.deb`; `rootfs-setup.sh` |
 | `image` | `out/ntp250.img`, `out/ntp250.img.sha256` | GPT, U-Boot at sector 64 in partition 3, ext4 root at 16 MiB, ext4 data after root |
 
 Runs unprivileged.  Host packages (Ubuntu): `gcc-aarch64-linux-gnu`,
@@ -56,13 +57,13 @@ rooted at `/`, copied onto the root partition owned by root.
 | Boot target | `multi-user.target`; no `getty@tty1` (no display) |
 | Carrier console | `ttyS2` (uart2, carrier micro-USB CH340N), 1500000 8N1: U-Boot from the autoboot prompt on, kernel (`earlycon` from the first message), root autologin |
 | Module console | `ttyS0` (uart0, module header 1 pins 8 TX, 10 RX, 6 GND), 1500000 8N1: DDR init, SPL, U-Boot, root autologin; no kernel log |
-| Config layout | `rootfs/overlay/`: units, drop-ins, networkd, resolved, journald, dnssd, repart, env files and the ruleset under `/usr/lib` (`/usr/lib/ntp250/`), scripts in `/usr/sbin`; `/etc` only where the program reads nothing else (`/etc/chrony/conf.d/ntp250.conf`, `/etc/apt/apt.conf.d/52ntp250-unattended-upgrades`, `/etc/locale.conf`); site and local overrides go in `/etc` |
+| Config layout | package `ntp250-config` (`package/README.md`): units, drop-ins, networkd, resolved, journald, dnssd, repart, env files and the ruleset under `/usr/lib` (`/usr/lib/ntp250/`), scripts in `/usr/sbin`; `/etc` only where the program reads nothing else (`/etc/chrony/conf.d/ntp250.conf`, `/etc/apt/apt.conf.d/52ntp250-unattended-upgrades`); site and local overrides go in `/etc` |
 | Network | `systemd-networkd`, DHCP on Ethernet (`/usr/lib/systemd/network/10-ethernet.network`), `MulticastDNS=yes` |
 | Name resolution | `systemd-resolved` (`resolved.conf.d/ntp250.conf`): LLMNR off; mDNS answers `HOSTNAME.local` and publishes `/usr/lib/systemd/dnssd/`: `ntp.dnssd` (`_ntp._udp`, port 123) |
 | SSH | root by key only; host keys generated on first boot |
 | Firewall | `nftables.service`, `/usr/lib/ntp250/nftables.conf` (drop-in `nftables.service.d/ntp250.conf`; the package's `/etc/nftables.conf` is unused): input drop except loopback, replies, ICMP/ICMPv6, NTP (UDP 123), SSH, chronymon-web (TCP 8323), mDNS (UDP 5353), DHCP from port 67, DHCPv6 from `fe80::/10` port 547, chain `site`; the rest counted (`dropped by policy`) and dropped; UDP 123 not connection tracked (stock NOTRACK); output and forward: accept, drop; site rules in `/etc/nftables.d/*.nft`, added to chain `inet filter site`; kernel `NF_TABLES`, `NF_TABLES_INET`, `NFT_CT`, `NF_CONNTRACK` built in |
 | Hostname | `ntp250` |
-| Locale | `LANG=C.UTF-8` (`/etc/locale.conf`; Debian tmpfiles links `/etc/default/locale` to it; built into glibc, no `locales` package) |
+| Locale | `LANG=C.UTF-8` (`/etc/locale.conf`, written by `rootfs-setup.sh`; Debian tmpfiles links `/etc/default/locale` to it; built into glibc, no `locales` package) |
 | Carrier GPIOs | named lines (`gpioinfo`); `ntp250-gpio-init.service` sets `gps-nreset`=1, `gps-reset`=0, `hdr-ppsout-en`=0 at boot |
 | Front panel | `ntp250-panel.service`: system and NTP LEDs and button SW1 with the stock rules (`NOTES.md` "Stock LEDs and button"), chrony in place of ntpd (NTP on: synced to PPS with PPS std dev <= 0.1 ms; blink: higher, or another source at stratum < 8; off: not synced); hold SW1 > 3 s: power off (halts; BL31 `rockchip_soc_system_off: Not supported!`, power stays on until unplugged), > 8 s: reboot; > 14 s: nothing (stock factory reset); DTS default triggers: system `timer`, SD `mmc1`, NTP off |
 | GPS reset | `ntp250-gps-reset` (0.5 s pulse, as stock `cc_resetgps`) |

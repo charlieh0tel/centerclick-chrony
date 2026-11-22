@@ -1,0 +1,67 @@
+#!/bin/sh
+set -e
+
+sums=/run/ntp250-config.sums
+# Units this package ships and enables.
+units="ntp250-gpio-init.service ntp250-gps-config.service ntp250-panel.service ntp250-ssh-hostkeys.service ntp250-tuning.service"
+
+# changed FILE...: true if any FILE differs from its checksum before the
+# upgrade, or had none.
+changed() {
+    for f in "$@"; do
+        old=$(awk -v f="$f" '$2 == f { print $1 }' "$sums")
+        new=$(sha256sum "$f" | cut -d' ' -f1)
+        [ "$old" = "$new" ] || return 0
+    done
+    return 1
+}
+
+# run CMD...: run CMD; on failure warn, without failing the upgrade.
+run() {
+    "$@" || echo "ntp250-config: failed: $*" >&2
+}
+
+# restart_changed: after an upgrade, apply changed files to running
+# services.  chrony and gpsd restart only when their own files change
+# (a restart costs PPS lock).  GPS receiver setup, GPIO init, journald,
+# systemd, repart and console changes apply at the next boot.
+restart_changed() {
+    s=/usr/lib/systemd/system
+    l=/usr/lib/ntp250
+    changed /etc/chrony/conf.d/ntp250.conf $l/chrony.env $s/chrony.service.d/ntp250.conf \
+        && run systemctl try-restart chrony.service
+    changed $l/gpsd.env $s/gpsd.service.d/ntp250.conf \
+        && run systemctl try-restart gpsd.service
+    changed $l/chronymond.env $s/chronymond.service.d/ntp250.conf \
+        && run systemctl try-restart chronymond.service
+    changed $l/chronymon-web.env $s/chronymon-web.service.d/ntp250.conf \
+        && run systemctl try-restart chronymon-web.service
+    changed $l/nftables.conf $s/nftables.service.d/ntp250.conf \
+        && run systemctl try-reload-or-restart nftables.service
+    changed /usr/lib/systemd/resolved.conf.d/ntp250.conf /usr/lib/systemd/dnssd/*.dnssd \
+        && run systemctl try-restart systemd-resolved.service
+    changed /usr/lib/systemd/network/10-ethernet.network \
+        && run networkctl reload
+    changed /usr/sbin/ntp250-panel $s/ntp250-panel.service \
+        && run systemctl try-restart ntp250-panel.service
+    changed /usr/sbin/ntp250-tuning $s/ntp250-tuning.service \
+        && run systemctl try-restart ntp250-tuning.service
+    rm -f "$sums"
+}
+
+if [ "$1" = configure ] || [ "$1" = abort-upgrade ]; then
+    for u in $units; do
+        deb-systemd-helper unmask "$u" >/dev/null || true
+        if deb-systemd-helper --quiet was-enabled "$u"; then
+            deb-systemd-helper enable "$u" >/dev/null || true
+        else
+            deb-systemd-helper update-state "$u" >/dev/null || true
+        fi
+    done
+    if [ -d /run/systemd/system ]; then
+        systemctl daemon-reload
+        if [ -n "$2" ] && [ -f "$sums" ]; then
+            restart_changed
+        fi
+    fi
+fi

@@ -130,7 +130,7 @@ Source: u-blox boot banner on `ttyS1` after `ntp250-gps-reset`.
 ## GPS configuration
 
 Applied at every boot by `ntp250-gps-config.service`
-(`rootfs/overlay/usr/sbin/ntp250-gps-config`), after
+(`package/ntp250-config/root/usr/sbin/ntp250-gps-config`), after
 `ntp250-gpio-init` and before gpsd.  The MAX-M8Q has no flash; `SAVE`
 reaches battery-backed RAM only (supercap, about 3 h).  Each setting must
 return `UBX-ACK-ACK`, or the service fails.
@@ -233,7 +233,7 @@ no network not tested.
 ## Timing tweaks
 
 Applied at boot by `ntp250-tuning.service`
-(`rootfs/overlay/usr/sbin/ntp250-tuning`), as the stock firmware
+(`package/ntp250-config/root/usr/sbin/ntp250-tuning`), as the stock firmware
 did (`stock/extracted/rootfs/usr/sbin/cc_monitor:2202-2208`).
 
 | Tweak | Mainline default | Set | Reason |
@@ -294,7 +294,7 @@ out).  PPS from `refclocks.log` (raw per-pulse offset), RMS from
 | Mainline | no TSADC node in `rk3308.dtsi`, no `rockchip,rk3308-tsadc` match; added by `image/patches/linux/` (RK3328 data, 2 channels, as the Rockchip vendor driver) and `dts/rk3308-ntp250.dts` | Linux 6.18 |
 | Shutdown | hardware TSHUT via CRU at 120 C; critical trips 115 C | stock DTB |
 | Noise | 0.45 C step, 0.55 C sd per reading (90 readings at 1 s, idle) | measured 2026-11-02 |
-| chrony | `tempcomp /sys/class/thermal/thermal_zone0/temp 32 40000 0 0 0`, one reading every 32 s; coefficients zero until fitted from `tempcomp.log` against `tracking.log` frequency | `rootfs/overlay/etc/chrony/conf.d/ntp250.conf` |
+| chrony | `tempcomp /sys/class/thermal/thermal_zone0/temp 32 40000 0 0 0`, one reading every 32 s; coefficients zero until fitted from `tempcomp.log` against `tracking.log` frequency | `package/ntp250-config/root/etc/chrony/conf.d/ntp250.conf` |
 
 ## MAC address
 
