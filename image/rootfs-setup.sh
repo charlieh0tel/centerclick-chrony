@@ -55,3 +55,7 @@ systemctl enable systemd-networkd systemd-resolved \
     ntp250-gps-config.service gpsd.service ntp250-tuning.service \
     ntp250-panel.service \
     serial-getty@ttyS0.service serial-getty@ttyS2.service
+
+# No display: boot to multi-user, no login on the VT.
+systemctl set-default multi-user.target
+systemctl disable getty@tty1.service
