@@ -183,7 +183,6 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 - U-Boot: boot extlinux without trying EFI first.
 - GNSS constellations: choose and set them (now GPS with QZSS, Galileo, SBAS; stock GPS, Galileo, GLONASS).
 - Unattended upgrades: all Debian origins (not charlieh0tel).
-- resolved: LLMNR off; mDNS on; advertise `_ntp._udp` and chronymon-web (`/etc/systemd/dnssd/`).
 - Firewall tidy: DHCP rules pinned to server ports, counter on drops, UDP 5353.
 - Kernel as a .deb (`bindeb-pkg`, DTS as a patch) in a separate component of the charlieh0tel repo; `u-boot-menu` writes `extlinux.conf`; manual upgrades, spare board first.
 - README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.

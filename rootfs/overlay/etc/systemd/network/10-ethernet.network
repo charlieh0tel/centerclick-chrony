@@ -3,3 +3,4 @@ Type=ether
 
 [Network]
 DHCP=yes
+MulticastDNS=yes
