@@ -187,7 +187,10 @@ stage_rootfs() {
         --customize-hook="upload '$ROOT/image/rootfs-setup.sh' /tmp/rootfs-setup.sh" \
         --customize-hook="chroot \"\$1\" sh /tmp/rootfs-setup.sh '$HOSTNAME' '$ROOT_PARTUUID' '$DATA_PARTUUID' '$KERNEL_CONSOLE' '$DTB'" \
         --customize-hook='rm "$1/tmp/rootfs-setup.sh"' \
-        "$DEBIAN_SUITE" "$BUILD/rootfs.tar" "$DEBIAN_MIRROR"
+        "$DEBIAN_SUITE" "$BUILD/rootfs.tar" \
+        "deb $DEBIAN_MIRROR $DEBIAN_SUITE main" \
+        "deb $DEBIAN_MIRROR $DEBIAN_SUITE-updates main" \
+        "deb $DEBIAN_SECURITY_MIRROR $DEBIAN_SUITE-security main"
 }
 
 # mkfs_tar LABEL UUID TARBALL SIZE_MIB OUT: ext4 image OUT of SIZE_MIB
