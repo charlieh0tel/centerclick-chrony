@@ -180,14 +180,10 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 - Button factory reset (SW1 held > 14 s; stock `cc_defaults`): define what it resets; now a no-op.
 - Read-only root, or overlayfs, to protect the SD card.
 - SD writes: 3.4 GB/day, 87% chronymond (NOTES.md "SD writes"); chronymond's write rate is with chronymon.
-- nftables firewall, with NOTRACK for UDP 123 as stock.
-- Default target multi-user; no getty on tty1.
 - U-Boot: boot extlinux without trying EFI first.
 - GNSS constellations: choose and set them (now GPS with QZSS, Galileo, SBAS; stock GPS, Galileo, GLONASS).
-- Saved clock for boots after power loss (RTC not backed): chronyd `-s` sets the clock from the drift file mtime.  Not `/var/lib/systemd/timesync/clock`: PID 1 reads it before `/var/lib` is bind-mounted.
 - Unattended upgrades: all Debian origins (not charlieh0tel).
 - Firewall tidy: DHCP rules pinned to server ports, counter on drops, UDP 5353.
-- chrony `ratelimit` (defaults).
 - Kernel as a .deb (`bindeb-pkg`, DTS as a patch) in a separate component of the charlieh0tel repo; `u-boot-menu` writes `extlinux.conf`; manual upgrades, spare board first.
 - README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.
 

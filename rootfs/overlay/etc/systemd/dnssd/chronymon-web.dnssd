@@ -1,0 +1,5 @@
+# DNS-SD advert of chronymon-web over mDNS (systemd-resolved).
+[Service]
+Name=%H chronymon
+Type=_http._tcp
+Port=8323
