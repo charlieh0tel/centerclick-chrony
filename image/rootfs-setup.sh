@@ -11,6 +11,8 @@ kernel_console=$4
 dtb=$5
 
 echo "$hostname" >/etc/hostname
+# C.UTF-8 is built into glibc; no locales package.
+echo LANG=C.UTF-8 >/etc/locale.conf
 cat >/etc/hosts <<EOF
 127.0.0.1	localhost
 127.0.1.1	$hostname
