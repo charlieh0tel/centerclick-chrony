@@ -2,7 +2,7 @@
 
 ## Repository
 
-- Private.
+- Public.
 
 ## Critical rules
 
