@@ -1,0 +1,7 @@
+# Options to pass to chronyd (chrony.service).
+# -F 1: seccomp filter (Debian default).
+# -s: at start, set the clock from the drift file's modification time when
+#     that is later than both the clock and the RTC.  The carrier RTC is
+#     not backed, so after a power loss this restores the time chronyd
+#     last wrote the drift file (about hourly, and at stop).
+DAEMON_OPTS="-F 1 -s"

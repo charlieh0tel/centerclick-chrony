@@ -184,7 +184,6 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 - Default target multi-user; no getty on tty1.
 - U-Boot: boot extlinux without trying EFI first.
 - GNSS constellations: choose and set them (now GPS with QZSS, Galileo, SBAS; stock GPS, Galileo, GLONASS).
-- Saved clock for boots after power loss (RTC not backed): chronyd `-s` sets the clock from the drift file mtime.  Not `/var/lib/systemd/timesync/clock`: PID 1 reads it before `/var/lib` is bind-mounted.
 - Unattended upgrades: all Debian origins (not charlieh0tel).
 - resolved: LLMNR off; mDNS on; advertise `_ntp._udp` and chronymon-web (`/etc/systemd/dnssd/`).
 - Firewall tidy: DHCP rules pinned to server ports, counter on drops, UDP 5353.
