@@ -42,7 +42,7 @@ rooted at `/`, copied onto the root partition owned by root.
 
 | Site | Contents |
 |---|---|
-| `site/chronos` | hostname `chronos`; `end0` 10.0.0.239/16, gateway 10.0.0.254, DNS 10.0.0.240, domain `murgatroid.com` (`05-site.network`, ahead of the image's DHCP); chrony `log tracking measurements statistics rtc refclocks tempcomp` |
+| `site/chronos` | hostname `chronos`; `end0` 10.0.0.239/16, gateway 10.0.0.254, DNS 10.0.0.240, domain `murgatroid.com`, mDNS (`05-site.network`, ahead of the image's DHCP); chrony `log tracking measurements statistics rtc refclocks tempcomp` |
 
 ## Image
 
@@ -55,7 +55,8 @@ rooted at `/`, copied onto the root partition owned by root.
 | Boot config | `/boot/extlinux/extlinux.conf`, `/boot/Image`, `/boot/dtbs/rockchip/rk3308-ntp250.dtb` |
 | Carrier console | `ttyS2` (uart2, carrier micro-USB CH340N), 1500000 8N1: U-Boot from the autoboot prompt on, kernel (`earlycon` from the first message), root autologin |
 | Module console | `ttyS0` (uart0, module header 1 pins 8 TX, 10 RX, 6 GND), 1500000 8N1: DDR init, SPL, U-Boot, root autologin; no kernel log |
-| Network | `systemd-networkd`, DHCP on Ethernet |
+| Network | `systemd-networkd`, DHCP on Ethernet, `MulticastDNS=yes` |
+| Name resolution | `systemd-resolved` (`resolved.conf.d/ntp250.conf`): LLMNR off; mDNS answers `HOSTNAME.local` and publishes `/etc/systemd/dnssd/`: `ntp.dnssd` (`_ntp._udp`, port 123) |
 | SSH | root by key only; host keys generated on first boot |
 | Hostname | `ntp250` |
 | Locale | `LANG=C.UTF-8` (`/etc/locale.conf`; Debian tmpfiles links `/etc/default/locale` to it; built into glibc, no `locales` package) |
