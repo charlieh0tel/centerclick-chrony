@@ -1,0 +1,13 @@
+Package: ntp250-config
+Version: @VERSION@
+Architecture: all
+Maintainer: Christopher Hoover <ch@murgatroid.com>
+Depends: chrony, gpsd, python3-gps, gpiod, iproute2, ethtool, nftables, systemd-resolved
+Recommends: chronymon, unattended-upgrades
+Section: admin
+Priority: optional
+Homepage: https://github.com/charlieh0tel/centerclick-chrony
+Description: CenterClick NTP250 configuration for mainline Linux and chrony
+ Units, scripts and settings for the NTP250 (ROCK Pi S on the CHRONOS
+ carrier): GPS setup, PPS refclock, front panel, firewall, mDNS,
+ timing tweaks and unattended upgrades.

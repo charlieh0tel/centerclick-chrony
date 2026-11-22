@@ -55,11 +55,9 @@ mkdir -p /etc/nftables.d
 
 depmod -a "$(ls /usr/lib/modules)"
 
-systemctl enable systemd-networkd systemd-resolved \
-    ntp250-ssh-hostkeys.service ntp250-gpio-init.service \
-    ntp250-gps-config.service gpsd.service ntp250-tuning.service \
-    ntp250-panel.service nftables.service \
-    serial-getty@ttyS0.service serial-getty@ttyS2.service
+# The ntp250-* units: enabled by ntp250-config's postinst.
+systemctl enable systemd-networkd systemd-resolved gpsd.service \
+    nftables.service serial-getty@ttyS0.service serial-getty@ttyS2.service
 
 # No display: boot to multi-user, no login on the VT.
 systemctl set-default multi-user.target
