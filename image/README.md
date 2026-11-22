@@ -53,10 +53,12 @@ rooted at `/`, copied onto the root partition owned by root.
 | Data partition | GPT partition 2 `data`, type linux-generic, after root, 512 MiB in the image, PARTUUID `21a10599-5390-427c-8790-0a84a983ba3c`; mounted on `/data`; `/data/var/lib` and `/data/var/log` bind-mounted on `/var/lib`, `/var/log`; no `nofail` |
 | First boot | `systemd-repart` (`/etc/repart.d/`) grows `data` to the end of the card, root fixed; `x-systemd.growfs` grows its ext4 |
 | Boot config | `/boot/extlinux/extlinux.conf`, `/boot/Image`, `/boot/dtbs/rockchip/rk3308-ntp250.dtb` |
+| Boot target | `multi-user.target`; no `getty@tty1` (no display) |
 | Carrier console | `ttyS2` (uart2, carrier micro-USB CH340N), 1500000 8N1: U-Boot from the autoboot prompt on, kernel (`earlycon` from the first message), root autologin |
 | Module console | `ttyS0` (uart0, module header 1 pins 8 TX, 10 RX, 6 GND), 1500000 8N1: DDR init, SPL, U-Boot, root autologin; no kernel log |
 | Network | `systemd-networkd`, DHCP on Ethernet |
 | SSH | root by key only; host keys generated on first boot |
+| Firewall | `nftables.service`, `/etc/nftables.conf`: input drop except loopback, replies, ICMP/ICMPv6, NTP (UDP 123), SSH, chronymon-web (TCP 8323), mDNS (UDP 5353), DHCP from port 67, DHCPv6 from `fe80::/10` port 547, chain `site`; the rest counted (`dropped by policy`) and dropped; UDP 123 not connection tracked (stock NOTRACK); output and forward: accept, drop; site rules in `/etc/nftables.d/*.nft`, added to chain `inet filter site`; kernel `NF_TABLES`, `NF_TABLES_INET`, `NFT_CT`, `NF_CONNTRACK` built in |
 | Hostname | `ntp250` |
 | Locale | `LANG=C.UTF-8` (`/etc/locale.conf`; Debian tmpfiles links `/etc/default/locale` to it; built into glibc, no `locales` package) |
 | Carrier GPIOs | named lines (`gpioinfo`); `ntp250-gpio-init.service` sets `gps-nreset`=1, `gps-reset`=0, `hdr-ppsout-en`=0 at boot |
@@ -64,7 +66,8 @@ rooted at `/`, copied onto the root partition owned by root.
 | GPS reset | `ntp250-gps-reset` (0.5 s pulse, as stock `cc_resetgps`) |
 | GPS config | `ntp250-gps-config.service` at every boot: factory reset, 115200, GPS+Galileo (no GLONASS/BeiDou), stationary, NMEA GGA/RMC/ZDA; see `NOTES.md` "GPS configuration" |
 | GPS daemon | `gpsd -n -b -s 115200 /dev/ttyS1` (`/etc/default/gpsd`), after `ntp250-gps-config` |
-| chrony | `/etc/chrony/conf.d/ntp250.conf`: SHM 0 `NMEA` (noselect, offset 0.043), `/dev/pps0` `PPS` locked to NMEA, preferred; Debian pool as sanity sources; serves NTP to all, `ratelimit` with chrony defaults (average interval 8 s, burst 8); `tempcomp` |
+| chrony | `/etc/chrony/conf.d/ntp250.conf`: SHM 0 `NMEA` (noselect, offset 0.043), `/dev/pps0` `PPS` locked to NMEA, preferred; Debian pool as sanity sources; serves NTP to all, `ratelimit` with chrony defaults (average interval 8 s, burst 8); `tempcomp`; `-s` (`/etc/default/chrony`): at start, clock set from the drift file mtime if later than the clock and RTC (RTC not backed) |
+| Monitoring | chronymon from `https://charlieh0tel.github.io/apt-repo` (`image/apt/charlieh0tel.sources`, key embedded, fingerprint A913 FC70 9FC0 4F20 2A4E ECF4 77CD 3854 7561 F4EC); `chronymond`: PPS `/dev/pps0`, gpsd `localhost`, commit every 120 s (`/etc/default/chronymond`); `chronymon-web` on `0.0.0.0:8323`, mDNS advert `HOSTNAME chronymon` `_http._tcp` (`/etc/systemd/dnssd/chronymon-web.dnssd`); database `/var/lib/chronymon/` |
 | Temperature | chrony `tempcomp` reads `thermal_zone0` (SoC logic TSADC); coefficients zero; see `NOTES.md` "Temperature" |
 | Journal | volatile, `/run/log/journal`, at most 32 MiB (`journald.conf.d/ntp250.conf`) |
 | Watchdog | `dw_wdt` `/dev/watchdog0`, systemd `RuntimeWatchdogSec=30s` (`system.conf.d/ntp250.conf`) |
