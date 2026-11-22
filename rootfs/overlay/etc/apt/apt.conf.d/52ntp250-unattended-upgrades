@@ -1,3 +1,6 @@
+// Daily package list update and unattended upgrade (apt-daily*.timer).
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
 // NTP250 additions to 50unattended-upgrades (Debian stable, point
 // releases and security): also stable-updates and the charlieh0tel
 // repo (chronymon; any suite).
@@ -5,8 +8,7 @@ Unattended-Upgrade::Origins-Pattern {
         "origin=Debian,codename=${distro_codename}-updates,label=Debian";
         "origin=charlieh0tel,label=charlieh0tel";
 };
-// Keep our overlay's versions of changed conffiles (/etc/default/chrony,
-// /etc/default/gpsd) instead of holding the package back.
+// Keep locally changed conffiles instead of holding the package back.
 Dpkg::Options {
         "--force-confdef";
         "--force-confold";
