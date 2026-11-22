@@ -1,0 +1,57 @@
+name: release
+
+# ntp250-config built on every push to main and every pull request to
+# it, so a change that breaks packaging shows before a tag; released
+# only for a v* tag (the release and trigger-apt-repo steps' ifs).
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  deb:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    # Full history: the package version comes from git describe.
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        fetch-depth: 0
+
+    - name: Lint
+      run: shellcheck -S warning package/build-ntp250-config.sh package/ntp250-config/preinst package/ntp250-config/postinst package/ntp250-config/prerm package/ntp250-config/postrm package/ntp250-config/root/usr/sbin/*
+
+    - name: Build ntp250-config
+      run: package/build-ntp250-config.sh out
+
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+      with:
+        name: ntp250-config
+        path: out/*.deb
+
+    - name: Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        GH_TOKEN: ${{ github.token }}
+      # A tag with a hyphen (v1.2.0-rc.1) is a pre-release: apt-repo
+      # takes each repository's latest release, never a pre-release.
+      run: |
+        prerelease=()
+        [[ $GITHUB_REF_NAME == *-* ]] && prerelease=(--prerelease)
+        gh release create "$GITHUB_REF_NAME" out/*.deb --title "$GITHUB_REF_NAME" \
+          --generate-notes "${prerelease[@]}"
+
+  trigger-apt-repo:
+    needs: deb
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    runs-on: ubuntu-latest
+    steps:
+    # workflow_dispatch, not repository_dispatch: the token then needs
+    # Actions: write on apt-repo instead of Contents: write.
+    - name: Trigger APT repo rebuild
+      env:
+        GH_TOKEN: ${{ secrets.APT_REPO_TOKEN }}
+      run: gh workflow run update-repo.yml -R charlieh0tel/apt-repo

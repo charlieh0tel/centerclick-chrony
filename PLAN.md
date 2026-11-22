@@ -52,7 +52,7 @@ centerclick-chrony/
   stock/              # backup image (gitignored), extracted dts, file listings
   dts/                # our device tree (+ overlays)
   image/              # image build scripts
-  rootfs/overlay/     # config files copied into the image
+  package/            # ntp250-config package; root/ is its file tree
   validate/           # test scripts
 ```
 
@@ -150,7 +150,7 @@ Status: done.
    - only the needed NMEA sentences
    - save to BBR (no flash; reapplied at every boot by `ntp250-gps-config.service`)
 2. gpsd: run on the GPS UART with `-n`. Make sure PPS reaches chrony exactly once, either via gpsd SHM/SOCK or directly from `/dev/pps0`, never both.
-3. Write `/etc/chrony/conf.d/ntp250.conf` (source under `rootfs/overlay/`):
+3. Write `/etc/chrony/conf.d/ntp250.conf` (source under `package/ntp250-config/root/`):
    ```
    refclock SHM 0 refid NMEA offset 0.043 delay 0.2 noselect
    refclock PPS /dev/pps0 lock NMEA refid PPS prefer poll 4
@@ -180,11 +180,8 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 - Button factory reset (SW1 held > 14 s; stock `cc_defaults`): define what it resets; now a no-op.
 - Read-only root, or overlayfs, to protect the SD card.
 - SD writes: 3.4 GB/day, 87% chronymond (NOTES.md "SD writes"); chronymond's write rate is with chronymon.
-- nftables firewall, with NOTRACK for UDP 123 as stock.
-- Default target multi-user; no getty on tty1.
 - GNSS constellations: choose and set them (now GPS with QZSS, Galileo, SBAS; stock GPS, Galileo, GLONASS).
-- Maybe: saved clock for boots after power loss (RTC not backed).  A timer touches `/var/lib/systemd/timesync/clock` hourly and at shutdown while chrony is synchronized; systemd PID 1 starts the clock no earlier than its mtime.  Not the `fake-hwclock` package: its periodic save needs cron.
-- Unattended security updates.
+- Kernel as a .deb (`bindeb-pkg`, DTS as a patch) in apt-repo `main`, built and released by CI; `u-boot-menu` writes `extlinux.conf`; manual upgrades, spare board first.
 - README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.
 
 ## Upstream (ask first)

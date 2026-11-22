@@ -60,6 +60,10 @@ readonly PACKAGES=(
     bind9-dnsutils traceroute netcat-openbsd tcpdump
     # time and GPS
     chrony gpsd gpsd-tools python3-gps python3-serial pps-tools
+    # updates
+    unattended-upgrades
+    # monitoring, from image/apt/charlieh0tel.sources
+    chronymon
     # hardware
     gpiod i2c-tools
 )
@@ -67,7 +71,7 @@ readonly PACKAGES=(
 # Host commands the stages need.
 readonly TOOLS=(
     curl sha256sum tar patch make bison flex swig "${CROSS}gcc"
-    mmdebstrap qemu-aarch64 mkfs.ext4 sgdisk dd truncate
+    mmdebstrap qemu-aarch64 mkfs.ext4 sgdisk dd truncate dpkg-deb
 )
 
 log() { printf '==> %s\n' "$*" >&2; }
@@ -169,25 +173,38 @@ stage_kernel() {
     tar -C "$staging" --owner=0 --group=0 --mode=go-w -cf "$BUILD/kernel.tar" boot usr
 }
 
+stage_config() {
+    log "ntp250-config"
+    local deb
+    deb=$("$ROOT/package/build-ntp250-config.sh" "$BUILD/deb")
+    ln -sf "${deb#"$BUILD"/}" "$BUILD/ntp250-config.deb"
+}
+
 stage_rootfs() {
     [[ -r $DEBIAN_KEYRING ]] || die "missing $DEBIAN_KEYRING (debian-archive-keyring)"
     [[ -r $AUTHORIZED_KEYS ]] \
         || die "no SSH public key at $AUTHORIZED_KEYS (set NTP250_AUTHORIZED_KEYS)"
+    [[ -r $BUILD/ntp250-config.deb ]] || die "no $BUILD/ntp250-config.deb (stage config)"
     log "rootfs debian $DEBIAN_SUITE"
     local include
     include=$(IFS=,; echo "${PACKAGES[*]}")
-    tar -C "$ROOT/rootfs/overlay" --owner=0 --group=0 --mode=go-w \
-        -cf "$BUILD/overlay.tar" etc usr
     # shellcheck disable=SC2016 # mmdebstrap expands $1 in hooks.
     mmdebstrap --mode=unshare --variant=minbase --architectures=arm64 \
         --keyring="$DEBIAN_KEYRING" --include="$include" \
-        --customize-hook="tar-in '$BUILD/overlay.tar' /" \
+        --setup-hook='mkdir -p "$1/etc/apt/sources.list.d"' \
+        --setup-hook="upload '$ROOT/image/apt/charlieh0tel.sources' /etc/apt/sources.list.d/charlieh0tel.sources" \
+        --customize-hook="upload '$(realpath "$BUILD/ntp250-config.deb")' /tmp/ntp250-config.deb" \
+        --customize-hook='chroot "$1" env DEBIAN_FRONTEND=noninteractive apt-get install -y -q /tmp/ntp250-config.deb' \
+        --customize-hook='rm "$1/tmp/ntp250-config.deb"' \
         --customize-hook="tar-in '$BUILD/kernel.tar' /" \
         --customize-hook="upload '$AUTHORIZED_KEYS' /root/.ssh/authorized_keys" \
         --customize-hook="upload '$ROOT/image/rootfs-setup.sh' /tmp/rootfs-setup.sh" \
         --customize-hook="chroot \"\$1\" sh /tmp/rootfs-setup.sh '$HOSTNAME' '$ROOT_PARTUUID' '$DATA_PARTUUID' '$KERNEL_CONSOLE' '$DTB'" \
         --customize-hook='rm "$1/tmp/rootfs-setup.sh"' \
-        "$DEBIAN_SUITE" "$BUILD/rootfs.tar" "$DEBIAN_MIRROR"
+        "$DEBIAN_SUITE" "$BUILD/rootfs.tar" \
+        "deb $DEBIAN_MIRROR $DEBIAN_SUITE main" \
+        "deb $DEBIAN_MIRROR $DEBIAN_SUITE-updates main" \
+        "deb $DEBIAN_SECURITY_MIRROR $DEBIAN_SUITE-security main"
 }
 
 # mkfs_tar LABEL UUID TARBALL SIZE_MIB OUT: ext4 image OUT of SIZE_MIB
@@ -251,11 +268,11 @@ stage_image() {
 
 main() {
     local stages=("$@") stage
-    (( ${#stages[@]} )) || stages=(fetch uboot kernel rootfs image)
+    (( ${#stages[@]} )) || stages=(fetch uboot kernel config rootfs image)
     check_tools
     for stage in "${stages[@]}"; do
         case $stage in
-            fetch | uboot | kernel | rootfs | image) "stage_$stage" ;;
+            fetch | uboot | kernel | config | rootfs | image) "stage_$stage" ;;
             *) die "unknown stage: $stage" ;;
         esac
     done

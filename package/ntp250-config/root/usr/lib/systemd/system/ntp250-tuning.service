@@ -1,0 +1,12 @@
+[Unit]
+Description=NTP250 timing tweaks (CPU idle and governor, Ethernet IRQ and coalescing)
+BindsTo=sys-subsystem-net-devices-end0.device
+After=sys-subsystem-net-devices-end0.device
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/ntp250-tuning
+
+[Install]
+WantedBy=multi-user.target

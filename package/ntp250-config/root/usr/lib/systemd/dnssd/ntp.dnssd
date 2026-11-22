@@ -1,0 +1,5 @@
+# DNS-SD advert of the NTP server over mDNS (systemd-resolved).
+[Service]
+Name=%H
+Type=_ntp._udp
+Port=123

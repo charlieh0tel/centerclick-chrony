@@ -11,6 +11,8 @@ kernel_console=$4
 dtb=$5
 
 echo "$hostname" >/etc/hostname
+# C.UTF-8 is built into glibc; no locales package.
+echo LANG=C.UTF-8 >/etc/locale.conf
 cat >/etc/hosts <<EOF
 127.0.0.1	localhost
 127.0.1.1	$hostname
@@ -48,10 +50,15 @@ chmod 600 /root/.ssh/authorized_keys
 # so no two cards share them.
 rm -f /etc/ssh/ssh_host_*
 
+# Site firewall rules (/usr/lib/ntp250/nftables.conf includes them).
+mkdir -p /etc/nftables.d
+
 depmod -a "$(ls /usr/lib/modules)"
 
-systemctl enable systemd-networkd systemd-resolved \
-    ntp250-ssh-hostkeys.service ntp250-gpio-init.service \
-    ntp250-gps-config.service gpsd.service ntp250-tuning.service \
-    ntp250-panel.service \
-    serial-getty@ttyS0.service serial-getty@ttyS2.service
+# The ntp250-* units: enabled by ntp250-config's postinst.
+systemctl enable systemd-networkd systemd-resolved gpsd.service \
+    nftables.service serial-getty@ttyS0.service serial-getty@ttyS2.service
+
+# No display: boot to multi-user, no login on the VT.
+systemctl set-default multi-user.target
+systemctl disable getty@tty1.service

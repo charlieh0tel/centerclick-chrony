@@ -1,8 +1,0 @@
-# NTP250: u-blox MAX-M8Q on uart1, configured by ntp250-gps-config.
-# -n: poll the GPS without waiting for a client, so chrony's SHM refclock
-#     gets time from boot on.
-# -b: read-only; never reconfigure the receiver.
-# -s: fixed speed, no autobaud.
-DEVICES="/dev/ttyS1"
-GPSD_OPTIONS="-n -b -s 115200"
-USBAUTO="false"

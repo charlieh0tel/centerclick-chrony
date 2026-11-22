@@ -1,0 +1,12 @@
+#!/bin/sh
+# Before an upgrade: record the checksums of the installed files, so
+# postinst restarts only what changed.
+set -e
+
+sums=/run/ntp250-config.sums
+
+if [ "$1" = upgrade ]; then
+    dpkg-query -L ntp250-config | while read -r f; do
+        [ -f "$f" ] && [ ! -L "$f" ] && sha256sum "$f"
+    done >"$sums" || true
+fi

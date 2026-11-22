@@ -6,3 +6,4 @@ Address=10.0.0.239/16
 Gateway=10.0.0.254
 DNS=10.0.0.240
 Domains=murgatroid.com
+MulticastDNS=yes

@@ -25,3 +25,4 @@ RKBIN_BL31_SHA256=fb4daee17fb3732f7ec04d92e480d0ed00b951e3e1e28ff5efe01c8794d984
 
 DEBIAN_SUITE=trixie
 DEBIAN_MIRROR=http://deb.debian.org/debian
+DEBIAN_SECURITY_MIRROR=http://security.debian.org/debian-security

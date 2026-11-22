@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+units="ntp250-gpio-init.service ntp250-gps-config.service ntp250-panel.service ntp250-ssh-hostkeys.service ntp250-tuning.service"
+
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload || true
+fi
+if [ "$1" = remove ]; then
+    for u in $units; do
+        deb-systemd-helper mask "$u" >/dev/null || true
+    done
+fi
+if [ "$1" = purge ]; then
+    for u in $units; do
+        deb-systemd-helper purge "$u" >/dev/null || true
+        deb-systemd-helper unmask "$u" >/dev/null || true
+    done
+fi
