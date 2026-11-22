@@ -16,7 +16,7 @@ image/build.sh kernel image   # selected stages, in the order given
 | `fetch` | `build/dl/` | pinned downloads, SHA-256 checked (`sources.sh`) |
 | `uboot` | `build/u-boot-rockchip.bin` | `rock-pi-s-rk3308_defconfig`, `patches/u-boot/`, rkbin DDR init v1.26 and BL31 |
 | `kernel` | `build/kernel.tar` | arm64 `defconfig` + `kernel.config`, `patches/linux/`; DTB from `dts/rk3308-ntp250.dts` |
-| `rootfs` | `build/rootfs.tar` | `mmdebstrap` unshare mode; overlay `rootfs/overlay/`; `rootfs-setup.sh` |
+| `rootfs` | `build/rootfs.tar` | `mmdebstrap` unshare mode; overlay `package/ntp250-config/root/`; `rootfs-setup.sh` |
 | `image` | `out/ntp250.img`, `out/ntp250.img.sha256` | GPT, U-Boot at sector 64 in partition 3, ext4 root at 16 MiB, ext4 data after root |
 
 Runs unprivileged.  Host packages (Ubuntu): `gcc-aarch64-linux-gnu`,
@@ -56,7 +56,7 @@ rooted at `/`, copied onto the root partition owned by root.
 | Boot target | `multi-user.target`; no `getty@tty1` (no display) |
 | Carrier console | `ttyS2` (uart2, carrier micro-USB CH340N), 1500000 8N1: U-Boot from the autoboot prompt on, kernel (`earlycon` from the first message), root autologin |
 | Module console | `ttyS0` (uart0, module header 1 pins 8 TX, 10 RX, 6 GND), 1500000 8N1: DDR init, SPL, U-Boot, root autologin; no kernel log |
-| Config layout | `rootfs/overlay/`: units, drop-ins, networkd, resolved, journald, dnssd, repart, env files and the ruleset under `/usr/lib` (`/usr/lib/ntp250/`), scripts in `/usr/sbin`; `/etc` only where the program reads nothing else (`/etc/chrony/conf.d/ntp250.conf`, `/etc/apt/apt.conf.d/52ntp250-unattended-upgrades`); site and local overrides go in `/etc` |
+| Config layout | `package/ntp250-config/root/`: units, drop-ins, networkd, resolved, journald, dnssd, repart, env files and the ruleset under `/usr/lib` (`/usr/lib/ntp250/`), scripts in `/usr/sbin`; `/etc` only where the program reads nothing else (`/etc/chrony/conf.d/ntp250.conf`, `/etc/apt/apt.conf.d/52ntp250-unattended-upgrades`); site and local overrides go in `/etc` |
 | Network | `systemd-networkd`, DHCP on Ethernet (`/usr/lib/systemd/network/10-ethernet.network`), `MulticastDNS=yes` |
 | Name resolution | `systemd-resolved` (`resolved.conf.d/ntp250.conf`): LLMNR off; mDNS answers `HOSTNAME.local` and publishes `/usr/lib/systemd/dnssd/`: `ntp.dnssd` (`_ntp._udp`, port 123) |
 | SSH | root by key only; host keys generated on first boot |

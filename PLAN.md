@@ -52,7 +52,7 @@ centerclick-chrony/
   stock/              # backup image (gitignored), extracted dts, file listings
   dts/                # our device tree (+ overlays)
   image/              # image build scripts
-  rootfs/overlay/     # config files copied into the image
+  package/            # ntp250-config package; root/ is its file tree
   validate/           # test scripts
 ```
 
@@ -150,7 +150,7 @@ Status: done.
    - only the needed NMEA sentences
    - save to BBR (no flash; reapplied at every boot by `ntp250-gps-config.service`)
 2. gpsd: run on the GPS UART with `-n`. Make sure PPS reaches chrony exactly once, either via gpsd SHM/SOCK or directly from `/dev/pps0`, never both.
-3. Write `/etc/chrony/conf.d/ntp250.conf` (source under `rootfs/overlay/`):
+3. Write `/etc/chrony/conf.d/ntp250.conf` (source under `package/ntp250-config/root/`):
    ```
    refclock SHM 0 refid NMEA offset 0.043 delay 0.2 noselect
    refclock PPS /dev/pps0 lock NMEA refid PPS prefer poll 4

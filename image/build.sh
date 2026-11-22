@@ -180,7 +180,7 @@ stage_rootfs() {
     log "rootfs debian $DEBIAN_SUITE"
     local include
     include=$(IFS=,; echo "${PACKAGES[*]}")
-    tar -C "$ROOT/rootfs/overlay" --owner=0 --group=0 --mode=go-w \
+    tar -C "$ROOT/package/ntp250-config/root" --owner=0 --group=0 --mode=go-w \
         -cf "$BUILD/overlay.tar" etc usr
     # shellcheck disable=SC2016 # mmdebstrap expands $1 in hooks.
     mmdebstrap --mode=unshare --variant=minbase --architectures=arm64 \
