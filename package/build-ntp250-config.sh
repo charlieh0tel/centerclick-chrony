@@ -42,8 +42,13 @@ Source: https://github.com/charlieh0tel/centerclick-chrony
 
 Files: *
 Copyright: 2026 Christopher Hoover
-License: none
- No license is granted.
+License: GPL-2
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of version 2 of the GNU General Public License as
+ published by the Free Software Foundation.
+ .
+ On Debian systems, the full text of the GNU General Public License
+ version 2 can be found in /usr/share/common-licenses/GPL-2.
 COPYRIGHT
 
 epoch=${SOURCE_DATE_EPOCH:-$(git -C "$root" log -1 --format=%ct)}
