@@ -71,7 +71,7 @@ rooted at `/`, copied onto the root partition owned by root.
 | Monitoring | chronymon from `https://charlieh0tel.github.io/apt-repo` (`image/apt/charlieh0tel.sources`, key embedded, fingerprint A913 FC70 9FC0 4F20 2A4E ECF4 77CD 3854 7561 F4EC); `chronymond`: PPS `/dev/pps0`, gpsd `localhost`, commit every 120 s (`/etc/default/chronymond`); `chronymon-web` on `0.0.0.0:8323`, mDNS advert `HOSTNAME chronymon` `_http._tcp` (`/etc/systemd/dnssd/chronymon-web.dnssd`); database `/var/lib/chronymon/` |
 | Temperature | chrony `tempcomp` reads `thermal_zone0` (SoC logic TSADC); coefficients zero; see `NOTES.md` "Temperature" |
 | APT sources | `trixie`, `trixie-updates`, `trixie-security` main (`/etc/apt/sources.list`, from `DEBIAN_MIRROR` and `DEBIAN_SECURITY_MIRROR` in `sources.sh`) |
-| Updates | `unattended-upgrades`, daily (`apt-daily*.timer`; `20auto-upgrades`): Debian stable, point releases, `-updates`, `-security` (`52ntp250-unattended-upgrades`); not charlieh0tel; keeps changed conffiles (`--force-confold`); never reboots; log `/var/log/unattended-upgrades/` |
+| Updates | `unattended-upgrades`, daily (`apt-daily*.timer`; `20auto-upgrades`): Debian stable, point releases, `-updates`, `-security`, charlieh0tel (`52ntp250-unattended-upgrades`); keeps changed conffiles (`--force-confold`); never reboots; log `/var/log/unattended-upgrades/` |
 | Journal | volatile, `/run/log/journal`, at most 32 MiB (`journald.conf.d/ntp250.conf`) |
 | Watchdog | `dw_wdt` `/dev/watchdog0`, systemd `RuntimeWatchdogSec=30s` (`system.conf.d/ntp250.conf`) |
 | Disabled | eMMC (not fitted), Wi-Fi (SDIO), Bluetooth (uart4) |
