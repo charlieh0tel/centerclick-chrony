@@ -1,0 +1,4 @@
+# Settings for chronymon-web (`chronymon-web --help`).
+
+# Serve on all addresses.
+CHRONYMON_WEB_LISTEN=0.0.0.0:8323
