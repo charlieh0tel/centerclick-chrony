@@ -24,7 +24,7 @@ Runs unprivileged.  Host packages (Ubuntu): `gcc-aarch64-linux-gnu`,
 `bison`, `flex`, `swig`, `python3-pyelftools`, `libgnutls28-dev`,
 `mmdebstrap`, `debian-archive-keyring`, `qemu-user`,
 `qemu-user-binfmt`, `gdisk`, e2fsprogs 1.47.1 or later (`mkfs.ext4 -d`
-from a tarball).
+from a tarball).  On an arm64 host: native `gcc`, no qemu.
 
 ## Write a card
 

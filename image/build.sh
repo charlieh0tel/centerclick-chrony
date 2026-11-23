@@ -17,11 +17,12 @@ readonly BUILD=$ROOT/build
 readonly DL=$BUILD/dl
 readonly OUT=$ROOT/out
 readonly IMAGE=$OUT/ntp250.img
-# Cross compiler prefix; none on an arm64 host.
+# Cross compiler prefix and arm64 emulator (mmdebstrap runs arm64
+# binaries); neither on an arm64 host.
 if [[ $(uname -m) == aarch64 ]]; then
-    readonly CROSS=
+    readonly CROSS='' EMULATOR=''
 else
-    readonly CROSS=aarch64-linux-gnu-
+    readonly CROSS=aarch64-linux-gnu- EMULATOR=qemu-aarch64
 fi
 JOBS=$(nproc)
 readonly JOBS
@@ -81,7 +82,7 @@ declare -rA TOOLS=(
     [uboot]="curl sha256sum tar patch make bison flex swig ${CROSS}gcc"
     [kernel]="curl sha256sum tar patch make bison flex ${CROSS}gcc dpkg-deb"
     [config]="dpkg-deb"
-    [rootfs]="mmdebstrap qemu-aarch64"
+    [rootfs]="mmdebstrap $EMULATOR"
     [image]="tar mkfs.ext4 sgdisk dd truncate sha256sum"
 )
 
