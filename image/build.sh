@@ -321,6 +321,7 @@ stage_rootfs() {
         --customize-hook="upload '$(realpath "$BUILD/ntp250-config.deb")' /tmp/ntp250-config.deb" \
         --customize-hook='chroot "$1" env DEBIAN_FRONTEND=noninteractive apt-get install -y -q /tmp/linux-image.deb /tmp/ntp250-config.deb' \
         --customize-hook='rm "$1/tmp/linux-image.deb" "$1/tmp/ntp250-config.deb"' \
+        --customize-hook="chroot \"\$1\" apt-mark -q auto linux-image-$KREL" \
         "$DEBIAN_SUITE" "$BUILD/rootfs.tar" \
         "deb $DEBIAN_MIRROR $DEBIAN_SUITE main" \
         "deb $DEBIAN_MIRROR $DEBIAN_SUITE-updates main" \
