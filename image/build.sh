@@ -79,8 +79,8 @@ readonly PACKAGES=(
 # Host commands each stage needs.
 declare -rA TOOLS=(
     [fetch]="curl sha256sum"
-    [uboot]="tar patch make bison flex swig ${CROSS}gcc"
-    [kernel]="sha256sum tar patch make bison flex ${CROSS}gcc dpkg-deb"
+    [uboot]="curl sha256sum tar patch make bison flex swig ${CROSS}gcc"
+    [kernel]="curl sha256sum tar patch make bison flex ${CROSS}gcc dpkg-deb"
     [config]="dpkg-deb"
     [rootfs]="mmdebstrap qemu-aarch64"
     [image]="tar mkfs.ext4 sgdisk dd truncate sha256sum"
@@ -103,6 +103,7 @@ check_tools() {
 fetch() {
     local url=$1 sha=$2
     local file=$DL/${url##*/}
+    mkdir -p "$DL"
     if [[ ! -f $file ]]; then
         log "fetch $url"
         curl -fsSL --retry 3 -o "$file.part" "$url"
@@ -143,18 +144,27 @@ merge_config() {
     done <"$fragment"
 }
 
-stage_fetch() {
-    mkdir -p "$DL"
+# fetch_linux, fetch_uboot: the downloads of the kernel and U-Boot stages.
+fetch_linux() {
     fetch "$LINUX_URL" "$LINUX_SHA256"
+}
+
+fetch_uboot() {
     fetch "$UBOOT_URL" "$UBOOT_SHA256"
     fetch "$RKBIN_BASE/$RKBIN_DDR_COMMIT/bin/rk33/$RKBIN_DDR" "$RKBIN_DDR_SHA256"
     fetch "$RKBIN_BASE/$RKBIN_BL31_COMMIT/bin/rk33/$RKBIN_BL31" "$RKBIN_BL31_SHA256"
+}
+
+stage_fetch() {
+    fetch_linux
+    fetch_uboot
 }
 
 stage_uboot() {
     local src=$BUILD/u-boot
     local umake=(make -C "$src" CROSS_COMPILE="$CROSS" -j"$JOBS")
     log "u-boot $UBOOT_VERSION"
+    fetch_uboot
     unpack "$DL/${UBOOT_URL##*/}" "$src"
     apply_patches u-boot "$src"
     "${umake[@]}" "$UBOOT_DEFCONFIG"
@@ -266,6 +276,7 @@ stage_kernel() {
         log "linux $KREL: built already"
     else
         log "linux $KREL"
+        fetch_linux
         unpack "$DL/${LINUX_URL##*/}" "$src"
         apply_patches linux "$src"
         cp "$ROOT/dts/rk3308-ntp250.dts" "$src/arch/arm64/boot/dts/rockchip/"

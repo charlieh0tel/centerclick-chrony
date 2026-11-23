@@ -58,7 +58,7 @@ the upgrade.
 
 | Job | Runner | Does |
 |---|---|---|
-| `kernel` | `ubuntu-24.04-arm` (native) | `image/build.sh fetch kernel`; package cached under its release and `LINUX_INPUTS_SHA256`, so a hit only checks the inputs; artifact `linux-image` |
+| `kernel` | `ubuntu-24.04-arm` (native) | `image/build.sh kernel`; package cached under its release and `LINUX_INPUTS_SHA256`, so a hit only checks the inputs; artifact `linux-image` |
 | `deb` | `ubuntu-latest` | shellcheck; `build-ntp250-config.sh`; artifact `ntp250-config` |
 | `release` | `ubuntu-latest` | `v*` tag only: GitHub release with both packages (apt-repo takes each repository's latest release only) |
 | `trigger-apt-repo` | `ubuntu-latest` | `v*` tag without a hyphen: starts the apt-repo rebuild (`APT_REPO_TOKEN`) |

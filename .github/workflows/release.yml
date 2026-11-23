@@ -42,12 +42,7 @@ jobs:
 
     # With the package cached, the kernel stage only checks the inputs.
     - name: Build kernel
-      run: |
-        if [[ '${{ steps.cache.outputs.cache-hit }}' == true ]]; then
-          image/build.sh kernel
-        else
-          image/build.sh fetch kernel
-        fi
+      run: image/build.sh kernel
 
     - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
       with:

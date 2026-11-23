@@ -13,7 +13,7 @@ image/build.sh kernel image   # selected stages, in the order given
 
 | Stage | Output | Notes |
 |---|---|---|
-| `fetch` | `build/dl/` | pinned downloads, SHA-256 checked (`sources.sh`) |
+| `fetch` | `build/dl/` | pinned downloads, SHA-256 checked (`sources.sh`), all at once; `uboot` and `kernel` fetch their own too |
 | `uboot` | `build/u-boot-rockchip.bin` | `rock-pi-s-rk3308_defconfig` + `u-boot.config` (no EFI loader: boots extlinux only), `patches/u-boot/`, rkbin DDR init v1.26 and BL31 |
 | `kernel` | `build/deb/linux-image-KREL_KREL_arm64.deb` | arm64 `defconfig` + `kernel.config`, `patches/linux/`; DTB from `dts/rk3308-ntp250.dts`; KREL `LINUX_VERSION` + `LINUX_LOCALVERSION` (`sources.sh`, e.g. `6.18.60-ntp250.1`); fails unless `LINUX_INPUTS_SHA256` matches the inputs (bump `LINUX_LOCALVERSION` on a change); skipped when that package exists |
 | `config` | `build/deb/ntp250-config_VERSION_all.deb`, `build/ntp250-config.deb` (link) | `package/build-ntp250-config.sh` (`package/README.md`) |
