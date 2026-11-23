@@ -4,7 +4,8 @@
 # mkfs.ext4 -d).
 #
 # Usage: image/build.sh [STAGE...]
-#   STAGE is fetch, uboot, kernel, rootfs or image; default: all, in order.
+#   STAGE is fetch, uboot, kernel, config, rootfs or image; default: all,
+#   in order.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
@@ -16,7 +17,12 @@ readonly BUILD=$ROOT/build
 readonly DL=$BUILD/dl
 readonly OUT=$ROOT/out
 readonly IMAGE=$OUT/ntp250.img
-readonly CROSS=aarch64-linux-gnu-
+# Cross compiler prefix; none on an arm64 host.
+if [[ $(uname -m) == aarch64 ]]; then
+    readonly CROSS=
+else
+    readonly CROSS=aarch64-linux-gnu-
+fi
 JOBS=$(nproc)
 readonly JOBS
 readonly AUTHORIZED_KEYS=${NTP250_AUTHORIZED_KEYS:-$HOME/.ssh/id_ed25519.pub}
@@ -68,19 +74,26 @@ readonly PACKAGES=(
     gpiod i2c-tools
 )
 
-# Host commands the stages need.
-readonly TOOLS=(
-    curl sha256sum tar patch make bison flex swig "${CROSS}gcc"
-    mmdebstrap qemu-aarch64 mkfs.ext4 sgdisk dd truncate dpkg-deb
+# Host commands each stage needs.
+declare -rA TOOLS=(
+    [fetch]="curl sha256sum"
+    [uboot]="tar patch make bison flex swig ${CROSS}gcc"
+    [kernel]="tar patch make bison flex ${CROSS}gcc dpkg-deb"
+    [config]="dpkg-deb"
+    [rootfs]="mmdebstrap qemu-aarch64"
+    [image]="tar mkfs.ext4 sgdisk dd truncate sha256sum"
 )
 
 log() { printf '==> %s\n' "$*" >&2; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
+# check_tools STAGE...: fail unless every tool the STAGEs need is present.
 check_tools() {
-    local tool
-    for tool in "${TOOLS[@]}"; do
-        command -v "$tool" >/dev/null || die "missing host tool: $tool"
+    local stage tool
+    for stage in "$@"; do
+        for tool in ${TOOLS[$stage]}; do
+            command -v "$tool" >/dev/null || die "missing host tool: $tool"
+        done
     done
 }
 
@@ -269,12 +282,12 @@ stage_image() {
 main() {
     local stages=("$@") stage
     (( ${#stages[@]} )) || stages=(fetch uboot kernel config rootfs image)
-    check_tools
     for stage in "${stages[@]}"; do
-        case $stage in
-            fetch | uboot | kernel | config | rootfs | image) "stage_$stage" ;;
-            *) die "unknown stage: $stage" ;;
-        esac
+        [[ -v TOOLS[$stage] ]] || die "unknown stage: $stage"
+    done
+    check_tools "${stages[@]}"
+    for stage in "${stages[@]}"; do
+        "stage_$stage"
     done
 }
 
