@@ -23,6 +23,10 @@ replaced; the stock card stays untouched.
 | [`PLAN.md`](PLAN.md) | plan, open work |
 | [`third_party/`](third_party/README.md) | vendor material, licenses |
 
+Install: `ntp250.img.xz` and `ntp250.img.sha256` from a release, then
+`sudo image/flash.sh -i ntp250.img.xz -k KEYFILE DEVICE [SITE]`
+([`image/README.md`](image/README.md)).
+
 Restore: put the stock card back.
 
 License: GPL-2.0-only ([`LICENSE`](LICENSE)).

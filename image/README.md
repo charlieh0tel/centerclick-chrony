@@ -29,15 +29,13 @@ from a tarball).  On an arm64 host: native `gcc`, no qemu.
 ## Write a card
 
 ```
-sudo image/flash.sh -k ~/.ssh/id_ed25519.pub /dev/sdX chronos   # image, site/chronos, SSH key
-sudo image/flash.sh /dev/sdX                                     # image as built
+sudo image/flash.sh [-i IMAGE] [-k KEYFILE] DEVICE [SITE]
+sudo image/flash.sh -i ntp250.img.xz -k ~/.ssh/id_ed25519.pub /dev/sdX chronos
 ```
 
-A release's image instead: `ntp250.img.xz` and `ntp250.img.sha256` from
-the GitHub release, `unxz` into `out/`.
-
-Checks `out/ntp250.img.sha256`; refuses a device that is not a whole,
-removable, unmounted disk.  Confirm DEVICE with
+IMAGE: `out/ntp250.img` (default), or a release's `ntp250.img.xz`, with
+`ntp250.img.sha256` beside it.  Checks the checksum; refuses a device
+that is not a whole, removable, unmounted disk.  Confirm DEVICE with
 `lsblk -o NAME,SIZE,MODEL,SERIAL` first.  A site overlay is a tree
 rooted at `/`, copied onto the root partition owned by root.  `-k
 KEYFILE` installs `/root/.ssh/authorized_keys`; no default.  The image
@@ -83,13 +81,3 @@ has no SSH key: without `-k`, root logs in on the serial consoles only.
 | Watchdog | `dw_wdt` `/dev/watchdog0`, started by U-Boot (21.5 s), fed by the kernel until systemd takes it: `RuntimeWatchdogSec=30s` (`system.conf.d/ntp250.conf`) |
 | Disabled | eMMC (not fitted), Wi-Fi (SDIO), Bluetooth (uart4) |
 | Timing tweaks | `ntp250-tuning.service`: cpuidle state1 off, governor `performance`, `end0` IRQ on CPU3, `rx-usecs 82`; see `NOTES.md` "Timing tweaks" |
-
-## Write to a card
-
-Confirm the device first (`lsblk -o NAME,SIZE,MODEL,SERIAL`), then:
-
-```
-sudo dd if=out/ntp250.img of=/dev/sdX bs=4M conv=fsync status=progress
-```
-
-No site overlay, no SSH key: root logs in on the serial consoles only.
