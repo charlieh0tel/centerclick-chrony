@@ -11,12 +11,18 @@ ubx() {
     ubxtool -f "$dev" -P 18 -w 1 "$@"
 }
 
-# apply ARGS...: send one setting at 115200; fail unless acknowledged.
+# Tries per setting: an acknowledgement is occasionally lost (SAVE, at
+# boot); every setting is idempotent.
+tries=3
+
+# apply ARGS...: send one setting at 115200, up to $tries times; fail
+# unless acknowledged.
 apply() {
-    ubx -s 115200 "$@" 2>&1 | grep -q UBX-ACK-ACK || {
-        echo "ntp250-gps-config: no ACK for $*" >&2
-        exit 1
-    }
+    for try in $(seq "$tries"); do
+        ubx -s 115200 "$@" 2>&1 | grep -q UBX-ACK-ACK && return 0
+        echo "ntp250-gps-config: no ACK for $* (try $try of $tries)" >&2
+    done
+    exit 1
 }
 
 # Factory defaults from either speed (only one gets through); afterwards

@@ -133,7 +133,8 @@ Applied at every boot by `ntp250-gps-config.service`
 (`package/ntp250-config/root/usr/sbin/ntp250-gps-config`), after
 `ntp250-gpio-init` and before gpsd.  The MAX-M8Q has no flash; `SAVE`
 reaches battery-backed RAM only (supercap, about 3 h).  Each setting must
-return `UBX-ACK-ACK`, or the service fails.
+return `UBX-ACK-ACK` within 3 tries, or the service fails; a lost ACK seen
+once for `SAVE` at boot (2026-11-23), not reproduced in 5 manual runs.
 
 | Setting | Value | ubxtool | Reason |
 |---|---|---|---|
