@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Write out/ntp250.img to a card, then copy a site overlay (a tree rooted
-# at /, e.g. site/chronos) onto its root partition and install root's SSH
-# key.  Run as root.
+# Write the image to a card, then copy a site overlay (a tree rooted at /,
+# e.g. site/chronos) onto its root partition and install root's SSH key.
+# Run as root.
 #
-# Usage: sudo image/flash.sh [-k KEYFILE] DEVICE [SITE]
+# Usage: sudo image/flash.sh [-i IMAGE] [-k KEYFILE] DEVICE [SITE]
+#   IMAGE: ntp250.img or ntp250.img.xz (a release's), checked against
+#   ntp250.img.sha256 beside it; default out/ntp250.img.
 #   KEYFILE: SSH public keys for root (/root/.ssh/authorized_keys); none:
 #   console login only.
 #   DEVICE is the whole card (e.g. /dev/sdc): removable, nothing mounted.
@@ -12,17 +14,18 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 readonly ROOT
-readonly IMAGE=$ROOT/out/ntp250.img
 # The root partition's GPT number (image/build.sh).
 readonly ROOT_PARTN=1
 
 log() { printf '==> %s\n' "$*" >&2; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
-usage="usage: image/flash.sh [-k KEYFILE] DEVICE [SITE]"
+usage="usage: image/flash.sh [-i IMAGE] [-k KEYFILE] DEVICE [SITE]"
+image=$ROOT/out/ntp250.img
 keys=
-while getopts k: opt; do
+while getopts i:k: opt; do
     case $opt in
+        i) image=$OPTARG ;;
         k) keys=$OPTARG ;;
         *) die "$usage" ;;
     esac
@@ -42,11 +45,22 @@ fi
 if [[ -n $keys ]]; then
     ssh-keygen -l -f "$keys" >&2 || die "$keys: not SSH public keys"
 fi
-(cd "${IMAGE%/*}" && sha256sum --quiet -c "${IMAGE##*/}.sha256") || die "$IMAGE checksum"
+# read_image: the uncompressed image on stdout.
+read_image() {
+    case $image in
+        *.xz) xz -dc "$image" ;;
+        *) cat "$image" ;;
+    esac
+}
+sums=${image%.xz}.sha256
+[[ -r $image && -r $sums ]] || die "need $image and $sums"
+log "check $image"
+[[ $(read_image | sha256sum | cut -d' ' -f1) == "$(cut -d' ' -f1 "$sums")" ]] \
+    || die "$image: checksum mismatch ($sums)"
 
 lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,PARTLABEL "$dev" >&2
-log "write $IMAGE to $dev"
-dd if="$IMAGE" of="$dev" bs=4M conv=fsync status=progress
+log "write $image to $dev"
+read_image | dd of="$dev" bs=4M iflag=fullblock conv=fsync status=progress
 blockdev --rereadpt "$dev"
 udevadm settle
 
