@@ -13,8 +13,10 @@ LINUX_LOCALVERSION=-ntp250.2
 LINUX_INPUTS_SHA256=108315c036ae3a33df77ccc6fcb9b8a346124bbc3210299f56580d7473310d28
 
 UBOOT_VERSION=2026.07
-UBOOT_URL=https://ftp.denx.de/pub/u-boot/u-boot-${UBOOT_VERSION}.tar.bz2
-UBOOT_SHA256=78e8bfc382fe388f9b55aa1daf8c563522a037779b5d4c349d1415e381f1243e
+# The GitHub mirror's tag archive: GitHub runners cannot reach
+# ftp.denx.de.  Same tree as denx's u-boot-2026.07.tar.bz2.
+UBOOT_URL=https://github.com/u-boot/u-boot/archive/refs/tags/v${UBOOT_VERSION}.tar.gz
+UBOOT_SHA256=21463d6d4498768d01fa192f6027468c04480d0daa99cd546f9a75a4d9ec353c
 UBOOT_DEFCONFIG=rock-pi-s-rk3308_defconfig
 
 # Rockchip binaries (no open-source equivalent for RK3308).
