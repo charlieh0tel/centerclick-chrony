@@ -4,6 +4,13 @@
 LINUX_VERSION=6.18.60
 LINUX_URL=https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${LINUX_VERSION}.tar.xz
 LINUX_SHA256=3c2f44ef6acc021a7ad444d9a2e6ec1ef488ff09368793d0004a6080f69d621e
+# Kernel release LINUX_VERSION + LINUX_LOCALVERSION names the package
+# (linux-image-6.18.60-ntp250.1), so each build installs beside the last.
+# Bump the counter when the kernel inputs change, reset it to 1 with a new
+# LINUX_VERSION; image/build.sh kernel checks LINUX_INPUTS_SHA256 against
+# the inputs and prints the new value.
+LINUX_LOCALVERSION=-ntp250.1
+LINUX_INPUTS_SHA256=108315c036ae3a33df77ccc6fcb9b8a346124bbc3210299f56580d7473310d28
 
 UBOOT_VERSION=2026.07
 UBOOT_URL=https://ftp.denx.de/pub/u-boot/u-boot-${UBOOT_VERSION}.tar.bz2

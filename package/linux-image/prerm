@@ -1,0 +1,12 @@
+#!/bin/sh
+# linux-image-@KREL@ prerm: run the kernel prerm hooks, as Debian kernel
+# packages do (initramfs-tools, apt-auto-removal, ntp250-extlinux).
+set -e
+export DEB_MAINT_PARAMS="$*"
+export INITRD=No
+for d in /etc/kernel/prerm.d /usr/share/kernel/prerm.d; do
+    if [ -d "$d" ]; then
+        run-parts --report --exit-on-error --arg=@KREL@ \
+            --arg=/boot/vmlinuz-@KREL@ "$d"
+    fi
+done

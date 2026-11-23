@@ -13,11 +13,11 @@ image/build.sh kernel image   # selected stages, in the order given
 
 | Stage | Output | Notes |
 |---|---|---|
-| `fetch` | `build/dl/` | pinned downloads, SHA-256 checked (`sources.sh`) |
+| `fetch` | `build/dl/` | pinned downloads, SHA-256 checked (`sources.sh`), all at once; `uboot` and `kernel` fetch their own too |
 | `uboot` | `build/u-boot-rockchip.bin` | `rock-pi-s-rk3308_defconfig` + `u-boot.config` (no EFI loader: boots extlinux only), `patches/u-boot/`, rkbin DDR init v1.26 and BL31 |
-| `kernel` | `build/kernel.tar` | arm64 `defconfig` + `kernel.config`, `patches/linux/`; DTB from `dts/rk3308-ntp250.dts` |
+| `kernel` | `build/deb/linux-image-KREL_KREL_arm64.deb` | arm64 `defconfig` + `kernel.config`, `patches/linux/`; DTB from `dts/rk3308-ntp250.dts`; KREL `LINUX_VERSION` + `LINUX_LOCALVERSION` (`sources.sh`, e.g. `6.18.60-ntp250.1`); fails unless `LINUX_INPUTS_SHA256` matches the inputs (bump `LINUX_LOCALVERSION` on a change); skipped when that package exists |
 | `config` | `build/deb/ntp250-config_VERSION_all.deb`, `build/ntp250-config.deb` (link) | `package/build-ntp250-config.sh` (`package/README.md`) |
-| `rootfs` | `build/rootfs.tar` | `mmdebstrap` unshare mode; installs `build/ntp250-config.deb`; `rootfs-setup.sh` |
+| `rootfs` | `build/rootfs.tar` | `mmdebstrap` unshare mode; `rootfs-setup.sh`; installs `build/linux-image.deb` and `build/ntp250-config.deb` |
 | `image` | `out/ntp250.img`, `out/ntp250.img.sha256` | GPT, U-Boot at sector 64 in partition 3, ext4 root at 16 MiB, ext4 data after root |
 
 Runs unprivileged.  Host packages (Ubuntu): `gcc-aarch64-linux-gnu`,
@@ -49,11 +49,14 @@ rooted at `/`, copied onto the root partition owned by root.
 
 | Item | Value |
 |---|---|
-| U-Boot | sector 64 (`u-boot-rockchip.bin`: idbloader + FIT), in GPT partition 3 `uboot`, type Linux reserved, sectors 64-32767, so `systemd-repart` does not discard it as free space |
+| U-Boot | sector 64 (`u-boot-rockchip.bin`: idbloader + FIT), in GPT partition 3 `uboot`, type Linux reserved, sectors 64-32767, PARTUUID `e659fba8-1c8f-4466-ba63-24033337a2cb`, so `systemd-repart` does not discard it as free space; `bootcmd` `sysboot` of `/boot/extlinux/extlinux.conf` on mmc 1:1, then `reset` (set by `preboot`, `u-boot.config`) |
+| U-Boot environment | two copies at card offsets 0xF00000 and 0xF10000, 32 KiB each, in partition 3 (`u-boot.config`; `build.sh` checks the layout against `/etc/fw_env.config`); `fw_printenv`, `fw_setenv` (`libubootenv-tool`); U-Boot saves the built-in one on a new card's first boot (`preboot`: `env info -d -q`), so `fw_setenv` edits a complete environment (with none saved, it refuses: no `/etc/u-boot-initial-env`); otherwise written only while a kernel is on trial; a saved environment replaces the built-in one whole; a card write zeroes it; after writing a new U-Boot alone, the saved `preboot` stays: `fw_setenv preboot` or zero the environment |
+| Kernel trial | a new default kernel other than the running one (`ntp250-extlinux`) sets `upgrade_available=1`, `bootcount=0`; U-Boot counts each boot (`BOOTCOUNT_ENV`); past `bootlimit` 3, `altbootcmd` boots `/boot/extlinux/fallback.conf`; a failed boot resets: panic (`panic=10`), hang (U-Boot starts the watchdog, 21.5 s), boot error (`reset`); `ntp250-boot-ok.service`: on the default kernel, `end0` online within 5 min ends the trial, else reboot; on the fallback kernel the trial stays, so every boot takes the fallback until another kernel is installed |
 | Root partition | GPT partition 1, type root-arm64, sector 32768, 2048 MiB, PARTUUID `33f4c7e9-0436-473f-9913-48d960e86116`, legacy BIOS bootable; `/var/lib`, `/var/log` empty mount points |
 | Data partition | GPT partition 2 `data`, type linux-generic, after root, 512 MiB in the image, PARTUUID `21a10599-5390-427c-8790-0a84a983ba3c`; mounted on `/data`; `/data/var/lib` and `/data/var/log` bind-mounted on `/var/lib`, `/var/log`; no `nofail` |
 | First boot | `systemd-repart` (`/usr/lib/repart.d/`) grows `data` to the end of the card, root fixed; `x-systemd.growfs` grows its ext4 |
-| Boot config | `/boot/extlinux/extlinux.conf`, `/boot/Image`, `/boot/dtbs/rockchip/rk3308-ntp250.dtb` |
+| Kernel | package `linux-image-KREL`: `/boot/vmlinuz-KREL`, `/boot/config-KREL`, `/usr/lib/linux-image-KREL/rockchip/rk3308-ntp250.dtb`, `/usr/lib/modules/KREL/`; runs the `/etc/kernel/*.d` and `/usr/share/kernel/*.d` hooks; each KREL a separate package, so the previous stays installed |
+| Boot config | `ntp250-extlinux` (kernel hooks, `ntp250-config` postinst) writes `/boot/extlinux/extlinux.conf` (newest installed kernel, `sort -V`) and `/boot/extlinux/fallback.conf` (the running kernel if older, else the next newest); kernel arguments from `/etc/kernel/cmdline` (`rootfs-setup.sh`, with `panic=10`) |
 | Boot target | `multi-user.target`; no `getty@tty1` (no display) |
 | Carrier console | `ttyS2` (uart2, carrier micro-USB CH340N), 1500000 8N1: U-Boot from the autoboot prompt on, kernel (`earlycon` from the first message), root autologin |
 | Module console | `ttyS0` (uart0, module header 1 pins 8 TX, 10 RX, 6 GND), 1500000 8N1: DDR init, SPL, U-Boot, root autologin; no kernel log |
@@ -75,7 +78,7 @@ rooted at `/`, copied onto the root partition owned by root.
 | APT sources | `trixie`, `trixie-updates`, `trixie-security` main (`/etc/apt/sources.list`, from `DEBIAN_MIRROR` and `DEBIAN_SECURITY_MIRROR` in `sources.sh`) |
 | Updates | `unattended-upgrades`, daily (`apt-daily*.timer`): Debian stable, point releases, `-updates`, `-security`, charlieh0tel (`52ntp250-unattended-upgrades`); keeps changed conffiles (`--force-confold`); never reboots; log `/var/log/unattended-upgrades/` |
 | Journal | volatile, `/run/log/journal`, at most 32 MiB (`journald.conf.d/ntp250.conf`) |
-| Watchdog | `dw_wdt` `/dev/watchdog0`, systemd `RuntimeWatchdogSec=30s` (`system.conf.d/ntp250.conf`) |
+| Watchdog | `dw_wdt` `/dev/watchdog0`, started by U-Boot (21.5 s), fed by the kernel until systemd takes it: `RuntimeWatchdogSec=30s` (`system.conf.d/ntp250.conf`) |
 | Disabled | eMMC (not fitted), Wi-Fi (SDIO), Bluetooth (uart4) |
 | Timing tweaks | `ntp250-tuning.service`: cpuidle state1 off, governor `performance`, `end0` IRQ on CPU3, `rx-usecs 82`; see `NOTES.md` "Timing tweaks" |
 

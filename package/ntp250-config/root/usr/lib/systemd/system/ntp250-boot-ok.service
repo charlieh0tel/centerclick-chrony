@@ -1,0 +1,11 @@
+[Unit]
+Description=NTP250 end a kernel trial once the network is up (U-Boot boot count)
+After=systemd-networkd.service
+
+[Service]
+# exec, not oneshot: multi-user.target need not wait for the network.
+Type=exec
+ExecStart=/usr/sbin/ntp250-boot-ok
+
+[Install]
+WantedBy=multi-user.target

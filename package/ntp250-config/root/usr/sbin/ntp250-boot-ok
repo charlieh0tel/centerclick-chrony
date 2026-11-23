@@ -1,0 +1,26 @@
+#!/bin/sh
+# End a kernel trial.  ntp250-extlinux starts one when a new kernel
+# becomes the default (U-Boot upgrade_available=1, bootcount=0); U-Boot
+# then counts boots and, past bootlimit, boots fallback.conf.  Here: on the
+# default kernel, once end0 is online, end the trial; if end0 is not online
+# within 5 min, reboot, so U-Boot counts another boot.  On the fallback
+# kernel, leave the trial on: every boot takes fallback.conf until another
+# kernel is installed.
+set -eu
+
+trial=$(fw_printenv -n upgrade_available 2>/dev/null) || trial=0
+[ "$trial" = 1 ] || exit 0
+default=$(sed -n 's|^[[:space:]]*kernel /boot/vmlinuz-||p' /boot/extlinux/extlinux.conf)
+running=$(uname -r)
+if [ "$running" != "$default" ]; then
+    echo "ntp250-boot-ok: $default failed; running fallback $running" >&2
+    exit 0
+fi
+if /usr/lib/systemd/systemd-networkd-wait-online --interface=end0 --timeout=300; then
+    fw_setenv upgrade_available 0
+    fw_setenv bootcount 0
+    echo "ntp250-boot-ok: $running good; trial over" >&2
+else
+    echo "ntp250-boot-ok: end0 not online on $running; reboot" >&2
+    systemctl reboot
+fi
