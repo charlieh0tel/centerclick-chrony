@@ -3,8 +3,10 @@
 # with their device tree): extlinux.conf boots the newest (sort -V);
 # fallback.conf boots the running kernel if installed and not the newest,
 # else the next newest, else the newest.  Kernel arguments from
-# /etc/kernel/cmdline.  Run by the kernel postinst and postrm hooks and by
-# ntp250-config's postinst.
+# /etc/kernel/cmdline.  A new default other than the running kernel starts
+# a trial: U-Boot upgrade_available=1, bootcount=0 (ntp250-boot-ok ends
+# it).  Run by the kernel postinst and postrm hooks and by ntp250-config's
+# postinst.
 set -eu
 
 dir=/boot/extlinux
@@ -29,6 +31,7 @@ done | sort -rV)
 }
 newest=$(echo "$kernels" | sed -n 1p)
 running=$(uname -r)
+old=$(sed -n 's|^[[:space:]]*kernel /boot/vmlinuz-||p' "$dir/extlinux.conf" 2>/dev/null) || old=
 if [ "$running" != "$newest" ] && echo "$kernels" | grep -qxF "$running"; then
     fallback=$running
 else
@@ -56,3 +59,14 @@ mkdir -p "$dir"
 menu "$dir/fallback.conf" fallback "$fallback"
 menu "$dir/extlinux.conf" ntp250 "$newest"
 echo "ntp250-extlinux: boot $newest, fallback $fallback" >&2
+
+[ "$newest" != "$old" ] && [ "$newest" != "$running" ] || exit 0
+# The environment's device: first field of /etc/fw_env.config.
+envdev=$(sed -n 's|^\(/dev/[^[:space:]]*\).*|\1|p' /etc/fw_env.config 2>/dev/null | sed -n 1p)
+if [ -n "$envdev" ] && [ -e "$envdev" ]; then
+    fw_setenv bootcount 0
+    fw_setenv upgrade_available 1
+    echo "ntp250-extlinux: $newest on trial (U-Boot boot count)" >&2
+else
+    echo "ntp250-extlinux: no U-Boot environment device; $newest not on trial" >&2
+fi

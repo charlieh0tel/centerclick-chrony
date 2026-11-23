@@ -34,7 +34,7 @@ Writes `OUTDIR/ntp250-config_VERSION_all.deb` and prints its path.  Needs
 | `linux-image/` | kernel package maintainer scripts (`image/build.sh` substitutes `@KREL@`): run the kernel hooks |
 
 Every file under `/etc` is a conffile (`/etc/chrony/conf.d/ntp250.conf`,
-`/etc/apt/apt.conf.d/52ntp250-unattended-upgrades`).
+`/etc/apt/apt.conf.d/52ntp250-unattended-upgrades`, `/etc/fw_env.config`).
 
 ## Upgrade actions
 

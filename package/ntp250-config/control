@@ -3,7 +3,7 @@ Version: @VERSION@
 Architecture: all
 Maintainer: Christopher Hoover <ch@murgatroid.com>
 Depends: chrony, gpsd, python3-gps, gpiod, iproute2, ethtool, nftables, systemd-resolved,
- linux-image-@KREL@
+ libubootenv-tool, linux-image-@KREL@
 Recommends: chronymon, unattended-upgrades
 Section: admin
 Priority: optional

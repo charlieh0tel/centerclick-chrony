@@ -3,7 +3,7 @@ set -e
 
 sums=/run/ntp250-config.sums
 # Units this package ships and enables.
-units="ntp250-gpio-init.service ntp250-gps-config.service ntp250-panel.service ntp250-ssh-hostkeys.service ntp250-tuning.service"
+units="ntp250-boot-ok.service ntp250-gpio-init.service ntp250-gps-config.service ntp250-panel.service ntp250-ssh-hostkeys.service ntp250-tuning.service"
 
 # changed FILE...: true if any FILE differs from its checksum before the
 # upgrade, or had none.

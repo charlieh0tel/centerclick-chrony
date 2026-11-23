@@ -43,6 +43,8 @@ readonly ROOT_PARTUUID=33f4c7e9-0436-473f-9913-48d960e86116
 readonly ROOT_FS_UUID=54bad6a8-164c-4ba7-9e9d-a63bf9872bd4
 readonly DATA_PARTUUID=21a10599-5390-427c-8790-0a84a983ba3c
 readonly DATA_FS_UUID=b83d83f4-2dd3-473c-8405-dbd96c7191d1
+# Fixed so /etc/fw_env.config can name the U-Boot environment's partition.
+readonly UBOOT_PARTUUID=e659fba8-1c8f-4466-ba63-24033337a2cb
 # Trees that live on the data partition, bind-mounted from /data.
 readonly DATA_TREES=(var/lib var/log)
 
@@ -66,8 +68,8 @@ readonly PACKAGES=(
     bind9-dnsutils traceroute netcat-openbsd tcpdump
     # time and GPS
     chrony gpsd gpsd-tools python3-gps python3-serial pps-tools
-    # updates
-    unattended-upgrades
+    # updates; U-Boot environment (boot count)
+    unattended-upgrades libubootenv-tool
     # monitoring, from image/apt/charlieh0tel.sources
     chronymon
     # hardware
@@ -158,7 +160,28 @@ stage_uboot() {
     "${umake[@]}" "$UBOOT_DEFCONFIG"
     merge_config "$src" "$ROOT/image/u-boot.config" "${umake[@]}"
     "${umake[@]}" BL31="$DL/$RKBIN_BL31" ROCKCHIP_TPL="$DL/$RKBIN_DDR"
+    check_uboot_env "$src"
     cp "$src/u-boot-rockchip.bin" "$BUILD/"
+}
+
+# check_uboot_env SRC: the environment copies of the U-Boot built in SRC
+# lie after U-Boot, inside partition 3, and match /etc/fw_env.config
+# (offsets from the partition start).
+check_uboot_env() {
+    local src=$1 conf=$ROOT/package/ntp250-config/root/etc/fw_env.config
+    local size offset redund part=$(( UBOOT_SECTOR * 512 ))
+    size=$(sed -n 's/^CONFIG_ENV_SIZE=//p' "$src/.config")
+    offset=$(sed -n 's/^CONFIG_ENV_OFFSET=//p' "$src/.config")
+    redund=$(sed -n 's/^CONFIG_ENV_OFFSET_REDUND=//p' "$src/.config")
+    (( UBOOT_SECTOR * 512 + $(stat -c %s "$src/u-boot-rockchip.bin") <= offset )) \
+        || die "U-Boot overlaps its environment"
+    (( offset + size <= redund && redund + size <= ROOT_START_SECTOR * 512 )) \
+        || die "U-Boot environment outside partition 3"
+    diff <(grep -v '^#' "$conf" | awk '{ print $1, $2, $3 }') - <<EOF \
+        || die "$conf does not match the U-Boot environment"
+/dev/disk/by-partuuid/$UBOOT_PARTUUID $(printf '0x%x 0x%x' $(( offset - part )) $(( size )))
+/dev/disk/by-partuuid/$UBOOT_PARTUUID $(printf '0x%x 0x%x' $(( redund - part )) $(( size )))
+EOF
 }
 
 readonly KREL=$LINUX_VERSION$LINUX_LOCALVERSION
@@ -339,6 +362,7 @@ stage_image() {
         --partition-guid=2:"$DATA_PARTUUID" \
         --new=3:"$UBOOT_SECTOR":$(( ROOT_START_SECTOR - 1 )) \
         --typecode=3:8301 --change-name=3:uboot \
+        --partition-guid=3:"$UBOOT_PARTUUID" \
         "$part" >/dev/null
     dd if="$rootimg" of="$part" bs=512 seek="$ROOT_START_SECTOR" \
         conv=notrunc,sparse status=none

@@ -31,9 +31,10 @@ PARTUUID=$data_partuuid /data ext4 defaults,noatime,x-systemd.growfs,x-systemd.a
 EOF
 
 # Kernel arguments; ntp250-extlinux (ntp250-config) writes the boot menus
-# from them when the kernel is installed.
+# from them when the kernel is installed.  panic=10: a panic reboots, so
+# U-Boot counts a failed boot of a kernel on trial.
 mkdir -p /etc/kernel
-echo "root=PARTUUID=$root_partuuid rootwait rw $kernel_console" >/etc/kernel/cmdline
+echo "root=PARTUUID=$root_partuuid rootwait rw $kernel_console panic=10" >/etc/kernel/cmdline
 
 chown -R root:root /root/.ssh
 chmod 700 /root/.ssh
