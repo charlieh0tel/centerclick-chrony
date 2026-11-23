@@ -194,7 +194,8 @@ kernel_inputs_sha() {
         echo "$LINUX_VERSION $LINUX_SHA256 $DTB"
         cat "$ROOT/image/kernel.config" "$ROOT/dts/rk3308-ntp250.dts" \
             "$ROOT"/image/patches/linux/*.patch "$ROOT"/package/linux-image/*
-        declare -f stage_kernel kernel_deb
+        # The two functions' source, the same under any bash.
+        sed -n '/^kernel_deb() {$/,/^}$/p; /^stage_kernel() {$/,/^}$/p' "$ROOT/image/build.sh"
     } | sha256sum | cut -d' ' -f1
 }
 
