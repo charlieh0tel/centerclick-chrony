@@ -26,20 +26,19 @@ Runs unprivileged.  Host packages (Ubuntu): `gcc-aarch64-linux-gnu`,
 `qemu-user-binfmt`, `gdisk`, e2fsprogs 1.47.1 or later (`mkfs.ext4 -d`
 from a tarball).
 
-`NTP250_AUTHORIZED_KEYS` names the SSH public key installed for root
-(default `~/.ssh/id_ed25519.pub`).
-
 ## Write a card
 
 ```
-sudo image/flash.sh /dev/sdX chronos   # image, then site/chronos
-sudo image/flash.sh /dev/sdX           # image as built
+sudo image/flash.sh -k ~/.ssh/id_ed25519.pub /dev/sdX chronos   # image, site/chronos, SSH key
+sudo image/flash.sh /dev/sdX                                     # image as built
 ```
 
 Checks `out/ntp250.img.sha256`; refuses a device that is not a whole,
 removable, unmounted disk.  Confirm DEVICE with
 `lsblk -o NAME,SIZE,MODEL,SERIAL` first.  A site overlay is a tree
-rooted at `/`, copied onto the root partition owned by root.
+rooted at `/`, copied onto the root partition owned by root.  `-k
+KEYFILE` installs `/root/.ssh/authorized_keys`; no default.  The image
+has no SSH key: without `-k`, root logs in on the serial consoles only.
 
 | Site | Contents |
 |---|---|
@@ -89,3 +88,5 @@ Confirm the device first (`lsblk -o NAME,SIZE,MODEL,SERIAL`), then:
 ```
 sudo dd if=out/ntp250.img of=/dev/sdX bs=4M conv=fsync status=progress
 ```
+
+No site overlay, no SSH key: root logs in on the serial consoles only.

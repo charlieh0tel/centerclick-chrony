@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Write out/ntp250.img to a card, then copy a site overlay (a tree rooted
-# at /, e.g. site/chronos) onto its root partition.  Run as root.
+# at /, e.g. site/chronos) onto its root partition and install root's SSH
+# key.  Run as root.
 #
-# Usage: sudo image/flash.sh DEVICE [SITE]
+# Usage: sudo image/flash.sh [-k KEYFILE] DEVICE [SITE]
+#   KEYFILE: SSH public keys for root (/root/.ssh/authorized_keys); none:
+#   console login only.
 #   DEVICE is the whole card (e.g. /dev/sdc): removable, nothing mounted.
 #   SITE is a directory under site/, or a path; none: the image as built.
 set -euo pipefail
@@ -16,7 +19,16 @@ readonly ROOT_PARTN=1
 log() { printf '==> %s\n' "$*" >&2; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
-(( $# == 1 || $# == 2 )) || die "usage: image/flash.sh DEVICE [SITE]"
+usage="usage: image/flash.sh [-k KEYFILE] DEVICE [SITE]"
+keys=
+while getopts k: opt; do
+    case $opt in
+        k) keys=$OPTARG ;;
+        *) die "$usage" ;;
+    esac
+done
+shift $((OPTIND - 1))
+(( $# == 1 || $# == 2 )) || die "$usage"
 dev=$1
 site=${2:-}
 (( EUID == 0 )) || die "run as root"
@@ -27,6 +39,9 @@ if [[ -n $site ]]; then
     [[ -d $site ]] || site=$ROOT/site/$site
     [[ -d $site ]] || die "no site overlay $2"
 fi
+if [[ -n $keys ]]; then
+    ssh-keygen -l -f "$keys" >&2 || die "$keys: not SSH public keys"
+fi
 (cd "${IMAGE%/*}" && sha256sum --quiet -c "${IMAGE##*/}.sha256") || die "$IMAGE checksum"
 
 lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,PARTLABEL "$dev" >&2
@@ -35,14 +50,21 @@ dd if="$IMAGE" of="$dev" bs=4M conv=fsync status=progress
 blockdev --rereadpt "$dev"
 udevadm settle
 
-[[ -n $site ]] || { log "done: $dev (no site overlay)"; exit 0; }
+[[ -n $site || -n $keys ]] || { log "done: $dev (no site overlay, no SSH key)"; exit 0; }
 part=$(lsblk -lnpo NAME,PARTN "$dev" | awk -v n="$ROOT_PARTN" '$2 == n { print $1 }')
 [[ -b $part ]] || die "no partition $ROOT_PARTN on $dev"
 mnt=$(mktemp -d)
 mount "$part" "$mnt"
 trap 'umount "$mnt" && rmdir "$mnt"' EXIT
-log "site overlay $site"
-# Files land owned by root with the overlay's modes.
-cp -rT --no-preserve=ownership "$site" "$mnt"
-find "$site" -mindepth 1 -printf '%P\n' >&2
+if [[ -n $site ]]; then
+    log "site overlay $site"
+    # Files land owned by root with the overlay's modes.
+    cp -rT --no-preserve=ownership "$site" "$mnt"
+    find "$site" -mindepth 1 -printf '%P\n' >&2
+fi
+if [[ -n $keys ]]; then
+    log "SSH key $keys"
+    install -d -m 700 "$mnt/root/.ssh"
+    install -m 600 "$keys" "$mnt/root/.ssh/authorized_keys"
+fi
 log "done: $dev"

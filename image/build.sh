@@ -25,7 +25,6 @@ else
 fi
 JOBS=$(nproc)
 readonly JOBS
-readonly AUTHORIZED_KEYS=${NTP250_AUTHORIZED_KEYS:-$HOME/.ssh/id_ed25519.pub}
 
 # Card layout in 512-byte sectors.  The RK3308 boot ROM loads U-Boot
 # (idbloader + FIT) from sector 64, inside partition 3 (uboot), so tools
@@ -301,8 +300,6 @@ stage_config() {
 
 stage_rootfs() {
     [[ -r $DEBIAN_KEYRING ]] || die "missing $DEBIAN_KEYRING (debian-archive-keyring)"
-    [[ -r $AUTHORIZED_KEYS ]] \
-        || die "no SSH public key at $AUTHORIZED_KEYS (set NTP250_AUTHORIZED_KEYS)"
     [[ -r $BUILD/ntp250-config.deb ]] || die "no $BUILD/ntp250-config.deb (stage config)"
     [[ -r $BUILD/linux-image.deb ]] || die "no $BUILD/linux-image.deb (stage kernel)"
     log "rootfs debian $DEBIAN_SUITE"
@@ -313,7 +310,6 @@ stage_rootfs() {
         --keyring="$DEBIAN_KEYRING" --include="$include" \
         --setup-hook='mkdir -p "$1/etc/apt/sources.list.d"' \
         --setup-hook="upload '$ROOT/image/apt/charlieh0tel.sources' /etc/apt/sources.list.d/charlieh0tel.sources" \
-        --customize-hook="upload '$AUTHORIZED_KEYS' /root/.ssh/authorized_keys" \
         --customize-hook="upload '$ROOT/image/rootfs-setup.sh' /tmp/rootfs-setup.sh" \
         --customize-hook="chroot \"\$1\" sh /tmp/rootfs-setup.sh '$HOSTNAME' '$ROOT_PARTUUID' '$DATA_PARTUUID' '$KERNEL_CONSOLE'" \
         --customize-hook='rm "$1/tmp/rootfs-setup.sh"' \

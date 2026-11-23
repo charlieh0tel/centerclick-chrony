@@ -36,10 +36,6 @@ EOF
 mkdir -p /etc/kernel
 echo "root=PARTUUID=$root_partuuid rootwait rw $kernel_console panic=10" >/etc/kernel/cmdline
 
-chown -R root:root /root/.ssh
-chmod 700 /root/.ssh
-chmod 600 /root/.ssh/authorized_keys
-
 # Host keys are generated on first boot (ntp250-ssh-hostkeys.service),
 # so no two cards share them.
 rm -f /etc/ssh/ssh_host_*
