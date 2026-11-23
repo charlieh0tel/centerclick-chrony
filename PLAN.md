@@ -180,7 +180,6 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 - Button factory reset (SW1 held > 14 s; stock `cc_defaults`): define what it resets; now a no-op.
 - Read-only root, or overlayfs, to protect the SD card.
 - SD writes: 3.4 GB/day, 87% chronymond (NOTES.md "SD writes"); chronymond's write rate is with chronymon.
-- U-Boot: boot extlinux without trying EFI first.
 - GNSS constellations: choose and set them (now GPS with QZSS, Galileo, SBAS; stock GPS, Galileo, GLONASS).
 - Kernel as a .deb (`bindeb-pkg`, DTS as a patch) in apt-repo `main`, built by CI (arm64 runner, cached unless kernel version, `kernel.config`, `patches/linux/` or the DTS change) and attached to every release with `ntp250-config` (apt-repo takes the latest release only); image installs it in place of `kernel.tar`; `u-boot-menu` writes `extlinux.conf` with the previous kernel as fallback; U-Boot boot count (`bootcount`, `altbootcmd` boots the previous kernel), reset by a service once booted; upgrades automatic (unattended-upgrades), active at the next boot.  After the U-Boot extlinux card test.
 - README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.

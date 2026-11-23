@@ -14,7 +14,7 @@ image/build.sh kernel image   # selected stages, in the order given
 | Stage | Output | Notes |
 |---|---|---|
 | `fetch` | `build/dl/` | pinned downloads, SHA-256 checked (`sources.sh`) |
-| `uboot` | `build/u-boot-rockchip.bin` | `rock-pi-s-rk3308_defconfig`, `patches/u-boot/`, rkbin DDR init v1.26 and BL31 |
+| `uboot` | `build/u-boot-rockchip.bin` | `rock-pi-s-rk3308_defconfig` + `u-boot.config` (no EFI loader: boots extlinux only), `patches/u-boot/`, rkbin DDR init v1.26 and BL31 |
 | `kernel` | `build/kernel.tar` | arm64 `defconfig` + `kernel.config`, `patches/linux/`; DTB from `dts/rk3308-ntp250.dts` |
 | `config` | `build/deb/ntp250-config_VERSION_all.deb`, `build/ntp250-config.deb` (link) | `package/build-ntp250-config.sh` (`package/README.md`) |
 | `rootfs` | `build/rootfs.tar` | `mmdebstrap` unshare mode; installs `build/ntp250-config.deb`; `rootfs-setup.sh` |
