@@ -174,6 +174,12 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 2. chronymon on apu-0 (GPS stratum 1, i210 hardware timestamps) polls this box and records offset and delay (http://apu-0.murgatroid.com:8323).
 3. Summarize 48 h of results in NOTES.md: offset distribution, jitter, and any outliers.
 
+**Done when** the 48 h summary is in NOTES.md and meets:
+- on the box: PPS std dev under 1 us; system time offset RMS under 1 us, max under 10 us
+- from apu-0: offset std dev under 15 us, no sample beyond 100 us; the steady offset (software timestamps here) reported, not judged
+
+Status: window 2026-11-23 23:30 to 2026-11-25 23:30 UTC.
+
 ## Phase 6: Polish
 
 - Button factory reset (SW1 held > 14 s; stock `cc_defaults`): define what it resets; now a no-op.
