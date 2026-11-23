@@ -43,7 +43,7 @@ rooted at `/`, copied onto the root partition owned by root.
 
 | Site | Contents |
 |---|---|
-| `site/chronos` | hostname `chronos`; `end0` 10.0.0.239/16, gateway 10.0.0.254, DNS 10.0.0.240, domain `murgatroid.com`, mDNS (`05-site.network`, ahead of the image's DHCP); chrony `log tracking measurements statistics rtc refclocks tempcomp` |
+| `site/chronos` | hostname `chronos`; `end0` 10.0.0.239/16, gateway 10.0.0.254, DNS 10.0.0.240, domain `murgatroid.com`, mDNS (`05-site.network`, ahead of the image's DHCP); chrony `log tracking measurements statistics refclocks tempcomp` |
 
 ## Image
 
