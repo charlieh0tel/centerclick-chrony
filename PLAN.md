@@ -173,7 +173,6 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 1. chronymon on the NTP250 records chronyd tracking and source statistics.
 2. chronymon on apu-0 (GPS stratum 1, i210 hardware timestamps) polls this box and records offset and delay (http://apu-0.murgatroid.com:8323).
 3. Summarize 48 h of results in NOTES.md: offset distribution, jitter, and any outliers.
-4. Fit the `tempcomp` coefficients from chrony's `tempcomp.log` and `tracking.log` once enough temperature range is logged.
 
 ## Phase 6: Polish
 
@@ -192,3 +191,4 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 
 - PTP. The 10/100 MAC likely lacks hardware timestamping; revisit only if the SoC supports it.
 - Modifying the base board.
+- Fitting the `tempcomp` coefficients: chronymon's work (its web UI fits linear and quadratic `tempcomp` lines); this repo logs `tempcomp.log` and `tracking.log` (`site/chronos`) and ships zero coefficients.
