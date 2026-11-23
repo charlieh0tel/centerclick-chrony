@@ -64,9 +64,13 @@ echo "ntp250-extlinux: boot $newest, fallback $fallback" >&2
 # The environment's device: first field of /etc/fw_env.config.
 envdev=$(sed -n 's|^\(/dev/[^[:space:]]*\).*|\1|p' /etc/fw_env.config 2>/dev/null | sed -n 1p)
 if [ -n "$envdev" ] && [ -e "$envdev" ]; then
-    fw_setenv bootcount 0
-    fw_setenv upgrade_available 1
-    echo "ntp250-extlinux: $newest on trial (U-Boot boot count)" >&2
+    # Never fails the kernel install: without the trial, the new kernel
+    # still boots, only without fallback.
+    if fw_setenv bootcount 0 && fw_setenv upgrade_available 1; then
+        echo "ntp250-extlinux: $newest on trial (U-Boot boot count)" >&2
+    else
+        echo "ntp250-extlinux: fw_setenv failed; $newest not on trial" >&2
+    fi
 else
     echo "ntp250-extlinux: no U-Boot environment device; $newest not on trial" >&2
 fi
