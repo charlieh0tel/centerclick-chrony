@@ -9,7 +9,7 @@ LINUX_SHA256=3c2f44ef6acc021a7ad444d9a2e6ec1ef488ff09368793d0004a6080f69d621e
 # Bump the counter when the kernel inputs change, reset it to 1 with a new
 # LINUX_VERSION; image/build.sh kernel checks LINUX_INPUTS_SHA256 against
 # the inputs and prints the new value.
-LINUX_LOCALVERSION=-ntp250.1
+LINUX_LOCALVERSION=-ntp250.2
 LINUX_INPUTS_SHA256=108315c036ae3a33df77ccc6fcb9b8a346124bbc3210299f56580d7473310d28
 
 UBOOT_VERSION=2026.07
