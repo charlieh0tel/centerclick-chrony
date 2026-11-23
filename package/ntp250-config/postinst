@@ -58,6 +58,8 @@ if [ "$1" = configure ] || [ "$1" = abort-upgrade ]; then
             deb-systemd-helper update-state "$u" >/dev/null || true
         fi
     done
+    # The kernel hooks may have run before this package was configured.
+    run ntp250-extlinux
     if [ -d /run/systemd/system ]; then
         systemctl daemon-reload
         if [ -n "$2" ] && [ -f "$sums" ]; then

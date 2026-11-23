@@ -1,0 +1,3 @@
+#!/bin/sh
+# Rewrite the U-Boot boot menus for the installed kernels.
+exec /usr/sbin/ntp250-extlinux

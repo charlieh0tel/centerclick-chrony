@@ -1,0 +1,12 @@
+#!/bin/sh
+# linux-image-@KREL@ postrm: run the kernel postrm hooks, as Debian kernel
+# packages do (initramfs-tools, apt-auto-removal, ntp250-extlinux).
+set -e
+export DEB_MAINT_PARAMS="$*"
+export INITRD=No
+for d in /etc/kernel/postrm.d /usr/share/kernel/postrm.d; do
+    if [ -d "$d" ]; then
+        run-parts --report --exit-on-error --arg=@KREL@ \
+            --arg=/boot/vmlinuz-@KREL@ "$d"
+    fi
+done

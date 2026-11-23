@@ -78,7 +78,7 @@ readonly PACKAGES=(
 declare -rA TOOLS=(
     [fetch]="curl sha256sum"
     [uboot]="tar patch make bison flex swig ${CROSS}gcc"
-    [kernel]="tar patch make bison flex ${CROSS}gcc dpkg-deb"
+    [kernel]="sha256sum tar patch make bison flex ${CROSS}gcc dpkg-deb"
     [config]="dpkg-deb"
     [rootfs]="mmdebstrap qemu-aarch64"
     [image]="tar mkfs.ext4 sgdisk dd truncate sha256sum"
@@ -161,29 +161,100 @@ stage_uboot() {
     cp "$src/u-boot-rockchip.bin" "$BUILD/"
 }
 
-stage_kernel() {
-    local src=$BUILD/linux staging=$BUILD/kernel-staging
-    local kmake=(make -C "$src" ARCH=arm64 CROSS_COMPILE="$CROSS" -j"$JOBS")
-    log "linux $LINUX_VERSION"
-    unpack "$DL/${LINUX_URL##*/}" "$src"
-    apply_patches linux "$src"
-    cp "$ROOT/dts/rk3308-ntp250.dts" "$src/arch/arm64/boot/dts/rockchip/"
-    # shellcheck disable=SC2016 # Make syntax, written literally.
-    echo 'dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3308-ntp250.dtb' \
-        >>"$src/arch/arm64/boot/dts/rockchip/Makefile"
-    "${kmake[@]}" defconfig
-    merge_config "$src" "$ROOT/image/kernel.config" "${kmake[@]}"
-    "${kmake[@]}" Image modules dtbs
-    rm -rf "$staging"
-    mkdir -p "$staging/boot/dtbs/rockchip"
-    cp "$src/arch/arm64/boot/Image" "$staging/boot/"
-    cp "$src/arch/arm64/boot/dts/$DTB" "$staging/boot/dtbs/rockchip/"
+readonly KREL=$LINUX_VERSION$LINUX_LOCALVERSION
+readonly KERNEL_DEB=$BUILD/deb/linux-image-${KREL}_${KREL}_arm64.deb
+
+# kernel_inputs_sha: SHA-256 over everything that goes into the kernel
+# package; a change needs a new LINUX_LOCALVERSION (image/sources.sh).
+kernel_inputs_sha() {
+    {
+        echo "$LINUX_VERSION $LINUX_SHA256 $DTB"
+        cat "$ROOT/image/kernel.config" "$ROOT/dts/rk3308-ntp250.dts" \
+            "$ROOT"/image/patches/linux/*.patch "$ROOT"/package/linux-image/*
+        declare -f stage_kernel kernel_deb
+    } | sha256sum | cut -d' ' -f1
+}
+
+# kernel_deb SRC MAKE...: package the kernel built in SRC as $KERNEL_DEB;
+# MAKE runs make in SRC.
+kernel_deb() {
+    local src=$1 stage=$BUILD/kernel-deb script
+    local kmake=("${@:2}")
+    local doc=$stage/usr/share/doc/linux-image-$KREL
+    rm -rf "$stage"
+    mkdir -p "$stage/boot" "$stage/usr/lib/linux-image-$KREL/${DTB%/*}" "$doc" "$stage/DEBIAN"
+    cp "$src/arch/arm64/boot/Image" "$stage/boot/vmlinuz-$KREL"
+    cp "$src/.config" "$stage/boot/config-$KREL"
+    cp "$src/arch/arm64/boot/dts/$DTB" "$stage/usr/lib/linux-image-$KREL/$DTB"
     # Debian has merged /usr: modules go under /usr/lib/modules.
-    "${kmake[@]}" modules_install INSTALL_MOD_PATH="$staging/usr" \
-        INSTALL_MOD_STRIP=1
+    "${kmake[@]}" modules_install INSTALL_MOD_PATH="$stage/usr" INSTALL_MOD_STRIP=1
     # build and source point into this host's tree; no headers on target.
-    rm -f "$staging"/usr/lib/modules/*/build "$staging"/usr/lib/modules/*/source
-    tar -C "$staging" --owner=0 --group=0 --mode=go-w -cf "$BUILD/kernel.tar" boot usr
+    rm -f "$stage/usr/lib/modules/$KREL/build" "$stage/usr/lib/modules/$KREL/source"
+    printf '%s\n' \
+        "Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/" \
+        "Upstream-Name: linux" \
+        "Source: $LINUX_URL" \
+        "" \
+        "Files: *" \
+        "Copyright: Linus Torvalds and others" \
+        "License: GPL-2" \
+        " On Debian systems, the full text of the GNU General Public License" \
+        " version 2 can be found in /usr/share/common-licenses/GPL-2." \
+        >"$doc/copyright"
+    printf '%s\n' \
+        "linux-image-$KREL ($KREL) unstable; urgency=medium" "" \
+        "  * Linux $LINUX_VERSION for the NTP250." "" \
+        " -- Christopher Hoover <ch@murgatroid.com>  $(date -u -R -r "$src/arch/arm64/boot/Image")" \
+        | gzip -9n >"$doc/changelog.Debian.gz"
+    find "$stage" -type d -exec chmod 755 {} +
+    find "$stage" -type f -exec chmod 644 {} +
+    printf '%s\n' \
+        "Package: linux-image-$KREL" \
+        "Version: $KREL" \
+        "Architecture: arm64" \
+        "Maintainer: Christopher Hoover <ch@murgatroid.com>" \
+        "Section: kernel" \
+        "Priority: optional" \
+        "Provides: linux-image" \
+        "Homepage: https://github.com/charlieh0tel/centerclick-chrony" \
+        "Description: Linux $KREL for the CenterClick NTP250" \
+        " Mainline Linux $LINUX_VERSION with image/kernel.config," \
+        " image/patches/linux and the rk3308-ntp250 device tree." \
+        >"$stage/DEBIAN/control"
+    for script in preinst postinst prerm postrm; do
+        sed "s/@KREL@/$KREL/g" "$ROOT/package/linux-image/$script" >"$stage/DEBIAN/$script"
+        chmod 755 "$stage/DEBIAN/$script"
+    done
+    (cd "$stage" && find boot usr -type f | sort | xargs md5sum) >"$stage/DEBIAN/md5sums"
+    mkdir -p "${KERNEL_DEB%/*}"
+    dpkg-deb --root-owner-group -Zxz --build "$stage" "$KERNEL_DEB" >/dev/null
+}
+
+stage_kernel() {
+    local src=$BUILD/linux sha
+    local kmake=(make -C "$src" ARCH=arm64 CROSS_COMPILE="$CROSS" -j"$JOBS"
+        LOCALVERSION="$LINUX_LOCALVERSION" KBUILD_BUILD_USER=ntp250
+        KBUILD_BUILD_HOST=centerclick-chrony)
+    sha=$(kernel_inputs_sha)
+    [[ $sha == "$LINUX_INPUTS_SHA256" ]] \
+        || die "kernel inputs changed: in image/sources.sh, bump LINUX_LOCALVERSION ($LINUX_LOCALVERSION) and set LINUX_INPUTS_SHA256=$sha"
+    if [[ -f $KERNEL_DEB ]]; then
+        log "linux $KREL: built already"
+    else
+        log "linux $KREL"
+        unpack "$DL/${LINUX_URL##*/}" "$src"
+        apply_patches linux "$src"
+        cp "$ROOT/dts/rk3308-ntp250.dts" "$src/arch/arm64/boot/dts/rockchip/"
+        # shellcheck disable=SC2016 # Make syntax, written literally.
+        echo 'dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3308-ntp250.dtb' \
+            >>"$src/arch/arm64/boot/dts/rockchip/Makefile"
+        "${kmake[@]}" defconfig
+        merge_config "$src" "$ROOT/image/kernel.config" "${kmake[@]}"
+        [[ $("${kmake[@]}" -s kernelrelease) == "$KREL" ]] || die "kernel release is not $KREL"
+        "${kmake[@]}" Image modules dtbs
+        kernel_deb "$src" "${kmake[@]}"
+    fi
+    ln -sf "${KERNEL_DEB#"$BUILD"/}" "$BUILD/linux-image.deb"
 }
 
 stage_config() {
@@ -198,6 +269,7 @@ stage_rootfs() {
     [[ -r $AUTHORIZED_KEYS ]] \
         || die "no SSH public key at $AUTHORIZED_KEYS (set NTP250_AUTHORIZED_KEYS)"
     [[ -r $BUILD/ntp250-config.deb ]] || die "no $BUILD/ntp250-config.deb (stage config)"
+    [[ -r $BUILD/linux-image.deb ]] || die "no $BUILD/linux-image.deb (stage kernel)"
     log "rootfs debian $DEBIAN_SUITE"
     local include
     include=$(IFS=,; echo "${PACKAGES[*]}")
@@ -206,14 +278,14 @@ stage_rootfs() {
         --keyring="$DEBIAN_KEYRING" --include="$include" \
         --setup-hook='mkdir -p "$1/etc/apt/sources.list.d"' \
         --setup-hook="upload '$ROOT/image/apt/charlieh0tel.sources' /etc/apt/sources.list.d/charlieh0tel.sources" \
-        --customize-hook="upload '$(realpath "$BUILD/ntp250-config.deb")' /tmp/ntp250-config.deb" \
-        --customize-hook='chroot "$1" env DEBIAN_FRONTEND=noninteractive apt-get install -y -q /tmp/ntp250-config.deb' \
-        --customize-hook='rm "$1/tmp/ntp250-config.deb"' \
-        --customize-hook="tar-in '$BUILD/kernel.tar' /" \
         --customize-hook="upload '$AUTHORIZED_KEYS' /root/.ssh/authorized_keys" \
         --customize-hook="upload '$ROOT/image/rootfs-setup.sh' /tmp/rootfs-setup.sh" \
-        --customize-hook="chroot \"\$1\" sh /tmp/rootfs-setup.sh '$HOSTNAME' '$ROOT_PARTUUID' '$DATA_PARTUUID' '$KERNEL_CONSOLE' '$DTB'" \
+        --customize-hook="chroot \"\$1\" sh /tmp/rootfs-setup.sh '$HOSTNAME' '$ROOT_PARTUUID' '$DATA_PARTUUID' '$KERNEL_CONSOLE'" \
         --customize-hook='rm "$1/tmp/rootfs-setup.sh"' \
+        --customize-hook="upload '$(realpath "$BUILD/linux-image.deb")' /tmp/linux-image.deb" \
+        --customize-hook="upload '$(realpath "$BUILD/ntp250-config.deb")' /tmp/ntp250-config.deb" \
+        --customize-hook='chroot "$1" env DEBIAN_FRONTEND=noninteractive apt-get install -y -q /tmp/linux-image.deb /tmp/ntp250-config.deb' \
+        --customize-hook='rm "$1/tmp/linux-image.deb" "$1/tmp/ntp250-config.deb"' \
         "$DEBIAN_SUITE" "$BUILD/rootfs.tar" \
         "deb $DEBIAN_MIRROR $DEBIAN_SUITE main" \
         "deb $DEBIAN_MIRROR $DEBIAN_SUITE-updates main" \

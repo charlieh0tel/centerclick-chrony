@@ -11,6 +11,10 @@ readonly root
 readonly meta=$root/package/ntp250-config
 readonly tree=$meta/root
 readonly name=ntp250-config
+# The kernel this package depends on (image/sources.sh).
+# shellcheck source=../image/sources.sh
+source "$root/image/sources.sh"
+readonly krel=$LINUX_VERSION$LINUX_LOCALVERSION
 
 # git_version: Debian version from git describe.
 git_version() {
@@ -65,10 +69,10 @@ gzip -9n "$doc/changelog"
 # other files 644, directories 755.
 find "$stage" -type d -exec chmod 755 {} +
 find "$stage" -type f -exec chmod 644 {} +
-chmod 755 "$stage"/usr/sbin/*
+chmod 755 "$stage"/usr/sbin/* "$stage"/usr/share/kernel/*/*
 
 mkdir "$stage/DEBIAN"
-sed "s/@VERSION@/$version/" "$meta/control" >"$stage/DEBIAN/control"
+sed -e "s/@VERSION@/$version/" -e "s/@KREL@/$krel/" "$meta/control" >"$stage/DEBIAN/control"
 install -m 755 "$meta/preinst" "$meta/postinst" "$meta/prerm" "$meta/postrm" "$stage/DEBIAN/"
 # Every file under /etc is a conffile; md5sums covers the rest.
 (cd "$stage" && find etc -type f | sort | sed 's|^|/|') >"$stage/DEBIAN/conffiles"

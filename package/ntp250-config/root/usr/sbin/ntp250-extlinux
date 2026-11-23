@@ -1,0 +1,58 @@
+#!/bin/sh
+# Write the U-Boot boot menus from the installed kernels (/boot/vmlinuz-*
+# with their device tree): extlinux.conf boots the newest (sort -V);
+# fallback.conf boots the running kernel if installed and not the newest,
+# else the next newest, else the newest.  Kernel arguments from
+# /etc/kernel/cmdline.  Run by the kernel postinst and postrm hooks and by
+# ntp250-config's postinst.
+set -eu
+
+dir=/boot/extlinux
+cmdline_file=/etc/kernel/cmdline
+# Device tree, under /usr/lib/linux-image-KREL/.
+dtb=rockchip/rk3308-ntp250.dtb
+
+[ -r "$cmdline_file" ] || {
+    echo "ntp250-extlinux: no $cmdline_file; boot menus unchanged" >&2
+    exit 0
+}
+cmdline=$(cat "$cmdline_file")
+
+# Installed kernels, newest first.
+kernels=$(for f in /boot/vmlinuz-*; do
+    k=${f#/boot/vmlinuz-}
+    [ -f "$f" ] && [ -f "/usr/lib/linux-image-$k/$dtb" ] && echo "$k"
+done | sort -rV)
+[ -n "$kernels" ] || {
+    echo "ntp250-extlinux: no kernel with $dtb; boot menus unchanged" >&2
+    exit 0
+}
+newest=$(echo "$kernels" | sed -n 1p)
+running=$(uname -r)
+if [ "$running" != "$newest" ] && echo "$kernels" | grep -qxF "$running"; then
+    fallback=$running
+else
+    fallback=$(echo "$kernels" | sed -n 2p)
+    fallback=${fallback:-$newest}
+fi
+
+# menu FILE LABEL KREL: write a one-entry menu, atomically.
+menu() {
+    cat >"$1.new" <<EOF
+# Written by ntp250-extlinux; rewritten on kernel install and removal.
+default $2
+timeout 10
+
+label $2
+	kernel /boot/vmlinuz-$3
+	fdt /usr/lib/linux-image-$3/$dtb
+	append $cmdline
+EOF
+    sync "$1.new"
+    mv "$1.new" "$1"
+}
+
+mkdir -p "$dir"
+menu "$dir/fallback.conf" fallback "$fallback"
+menu "$dir/extlinux.conf" ntp250 "$newest"
+echo "ntp250-extlinux: boot $newest, fallback $fallback" >&2

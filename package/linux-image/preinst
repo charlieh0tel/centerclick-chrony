@@ -1,0 +1,12 @@
+#!/bin/sh
+# linux-image-@KREL@ preinst: run the kernel preinst hooks, as Debian kernel
+# packages do (initramfs-tools, apt-auto-removal, ntp250-extlinux).
+set -e
+export DEB_MAINT_PARAMS="$*"
+export INITRD=No
+for d in /etc/kernel/preinst.d /usr/share/kernel/preinst.d; do
+    if [ -d "$d" ]; then
+        run-parts --report --exit-on-error --arg=@KREL@ \
+            --arg=/boot/vmlinuz-@KREL@ "$d"
+    fi
+done

@@ -1,7 +1,9 @@
 # package
 
 `ntp250-config`: the NTP250 configuration as a Debian package (architecture
-`all`).  The image build installs it; boards upgrade it through apt.
+`all`).  The image build installs it; boards upgrade it through apt.  It
+depends on the kernel package of `image/sources.sh` (`linux-image-KREL`,
+built by `image/build.sh kernel`), so an upgrade brings that kernel.
 
 ## Build
 
@@ -25,10 +27,11 @@ Writes `OUTDIR/ntp250-config_VERSION_all.deb` and prints its path.  Needs
 | Path | Role |
 |---|---|
 | `ntp250-config/root/` | file tree (layout: `image/README.md` "Config layout") |
-| `ntp250-config/control` | control file; `@VERSION@` substituted |
+| `ntp250-config/control` | control file; `@VERSION@` and `@KREL@` substituted |
 | `ntp250-config/preinst` | on upgrade: checksums of installed files to `/run/ntp250-config.sums` |
-| `ntp250-config/postinst` | enables the `ntp250-*` units (`deb-systemd-helper`); on upgrade restarts only services whose files changed |
+| `ntp250-config/postinst` | runs `ntp250-extlinux`; enables the `ntp250-*` units (`deb-systemd-helper`); on upgrade restarts only services whose files changed |
 | `ntp250-config/prerm`, `postrm` | stop the panel on remove; mask on remove, purge state on purge |
+| `linux-image/` | kernel package maintainer scripts (`image/build.sh` substitutes `@KREL@`): run the kernel hooks |
 
 Every file under `/etc` is a conffile (`/etc/chrony/conf.d/ntp250.conf`,
 `/etc/apt/apt.conf.d/52ntp250-unattended-upgrades`).
