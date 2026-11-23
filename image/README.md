@@ -33,6 +33,9 @@ sudo image/flash.sh -k ~/.ssh/id_ed25519.pub /dev/sdX chronos   # image, site/ch
 sudo image/flash.sh /dev/sdX                                     # image as built
 ```
 
+A release's image instead: `ntp250.img.xz` and `ntp250.img.sha256` from
+the GitHub release, `unxz` into `out/`.
+
 Checks `out/ntp250.img.sha256`; refuses a device that is not a whole,
 removable, unmounted disk.  Confirm DEVICE with
 `lsblk -o NAME,SIZE,MODEL,SERIAL` first.  A site overlay is a tree
