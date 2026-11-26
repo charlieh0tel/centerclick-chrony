@@ -194,6 +194,37 @@ coefficients zero.
 | PPS std dev (`statistics.log`) | mean 535 ns, max 2.5 us; 8% of updates at 1 us or more, spread over all hours | under 1 us |
 | Clients | 8 LAN hosts, no drops | sync to the box |
 
+## 48 h run
+
+2026-11-23 23:30 to 2026-11-25 23:30 UTC, v0.3.2 release image (kernel
+6.18.60-ntp250.2, `ntp250-config` 0.3.2), up from 23:14, no reboot; PPS
+selected for all 10790 updates.  Box: chrony `tracking.log`,
+`statistics.log`.  apu-0: chronymon `ntp_sample` of chronos (2776 samples,
+poll 4-6).  Same switch and antenna not checked.
+
+| Measure | Result | Criterion (PLAN.md Phase 5) |
+|---|---|---|
+| System time offset to PPS | RMS 533 ns, max 5.7 us | RMS under 1 us, max under 10 us |
+| PPS std dev | mean 536 ns, median 490 ns, p99 1.56 us, max 3.7 us; 4.5% of updates at 1 us or more | under 1 us |
+| apu-0 offset | median +32.7 us, sd 9.2 us, p1 +10.3 us, p99 +45.1 us | sd under 15 us, none beyond 100 us |
+| apu-0 delay | median 198 us, p1 155 us, p99 224 us, max 287 us | |
+| Clients | 20 | |
+
+- apu-0 offset excludes 2026-11-24 01:48-01:52, when apu-0 lost its own
+  reference (stratum 2, own offsets to +-860 us; apu-0 chronymon
+  `tracking`): 8 samples to -896 us, and sample gaps 01:36-01:52.
+  Included: sd 15.9 us.  chronos was quiet then.
+- apu-0 offset is bimodal, modes near +17 and +33 us, and correlates
+  with delay (r 0.5); steady over the window (6 h medians +31.7..+33.2
+  us).  The positive offset: software timestamps here (NOTES.md "Timing
+  tweaks").
+- System time excursions of 3-5.7 us, 39 in 48 h; 2026-11-25 01:48-05:08
+  about every 17.5 min.  Likely the chronymon tempcomp work (its
+  agent, per the user; not checked).  The `tempcomp` coefficients on
+  chronos stayed zero.
+- 2026-11-25 06:09 unattended-upgrades installed `libzstd1`: excursions
+  to 3.9 us for a minute, no service restart.
+
 ## SD writes
 
 Measured on chronos 2026-11-09 18:31 to 2026-11-19 00:25 UTC (798808 s,
