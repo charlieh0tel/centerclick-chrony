@@ -219,9 +219,7 @@ poll 4-6).  Same switch and antenna not checked.
   us).  The positive offset: software timestamps here (NOTES.md "Timing
   tweaks").
 - System time excursions of 3-5.7 us, 39 in 48 h; 2026-11-25 01:48-05:08
-  about every 17.5 min.  Likely the chronymon tempcomp work (its
-  agent, per the user; not checked).  The `tempcomp` coefficients on
-  chronos stayed zero.
+  about every 17.5 min.  Cause unknown.
 - 2026-11-25 06:09 unattended-upgrades installed `libzstd1`: excursions
   to 3.9 us for a minute, no service restart.
 
