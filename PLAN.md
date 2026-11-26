@@ -178,7 +178,7 @@ Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
 - on the box: PPS std dev under 1 us; system time offset RMS under 1 us, max under 10 us
 - from apu-0: offset std dev under 15 us, no sample beyond 100 us; the steady offset (software timestamps here) reported, not judged
 
-Status: window 2026-11-23 23:30 to 2026-11-25 23:30 UTC.
+Status: done (NOTES.md "48 h run").
 
 ## Phase 6: Polish
 
