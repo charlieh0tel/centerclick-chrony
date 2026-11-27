@@ -33,9 +33,10 @@ sleep 2
 ubx -s 9600 -S 115200 >/dev/null 2>&1
 
 apply -e GPS
-apply -e GALILEO
+apply -d GALILEO
 apply -d GLONASS
 apply -d BEIDOU
+apply -d SBAS
 apply -p MODEL,2
 apply -p CFG-MSG,0xf0,0x01,0
 apply -p CFG-MSG,0xf0,0x02,0

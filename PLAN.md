@@ -145,7 +145,7 @@ Status: done.
 
 1. Configure the M8Q with ubxtool:
    - stationary dynamic model
-   - GPS + Galileo enabled (GLONASS, BeiDou off)
+   - GPS only (with QZSS)
    - timepulse 1 Hz aligned to GPS or UTC
    - only the needed NMEA sentences
    - save to BBR (no flash; reapplied at every boot by `ntp250-gps-config.service`)
@@ -185,7 +185,6 @@ Status: done (NOTES.md "48 h run").
 - Button factory reset (SW1 held > 14 s; stock `cc_defaults`): define what it resets; now a no-op.
 - Read-only root, or overlayfs, to protect the SD card.
 - SD writes: 3.4 GB/day, 87% chronymond (NOTES.md "SD writes"); chronymond's write rate is with chronymon.
-- GNSS constellations: choose and set them (now GPS with QZSS, Galileo, SBAS; stock GPS, Galileo, GLONASS).
 - README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.
 
 ## Upstream (ask first)
