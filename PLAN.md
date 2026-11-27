@@ -181,7 +181,7 @@ Status: done (NOTES.md "48 h run").
 
 ## Phase 6: Polish
 
-- SD writes: 3.4 GB/day, 87% chronymond (NOTES.md "SD writes"); chronymond's write rate is with chronymon.
+Status: done.
 
 ## Upstream (ask first)
 
