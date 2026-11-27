@@ -7,6 +7,8 @@ Before=gpsd.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+EnvironmentFile=/usr/lib/ntp250/gps-config.env
+EnvironmentFile=-/etc/default/ntp250-gps-config
 ExecStart=/usr/sbin/ntp250-gps-config
 
 [Install]

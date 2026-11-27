@@ -2,10 +2,21 @@
 # Configure the u-blox MAX-M8Q on uart1 before gpsd starts.  The M8Q has
 # no flash: settings survive only in battery-backed RAM (supercap, about
 # 3 h), so this runs at every boot.  Settings and reasons: NOTES.md "GPS
-# configuration".
+# configuration".  Constellations: NTP250_GNSS
+# (/usr/lib/ntp250/gps-config.env).
 set -eu
 
 dev=/dev/ttyS1
+# ubxtool's constellation names; GPS also sets QZSS.
+all_gnss='GPS GALILEO GLONASS BEIDOU SBAS'
+
+[ -n "${NTP250_GNSS:-}" ] || { echo "ntp250-gps-config: NTP250_GNSS empty or unset" >&2; exit 1; }
+for g in $NTP250_GNSS; do
+    case " $all_gnss " in
+    *" $g "*) ;;
+    *) echo "ntp250-gps-config: unknown constellation $g in NTP250_GNSS" >&2; exit 1 ;;
+    esac
+done
 
 ubx() {
     ubxtool -f "$dev" -P 18 -w 1 "$@"
@@ -32,11 +43,12 @@ ubx -s 9600 -p RESET >/dev/null 2>&1 || true
 sleep 2
 ubx -s 9600 -S 115200 >/dev/null 2>&1
 
-apply -e GPS
-apply -d GALILEO
-apply -d GLONASS
-apply -d BEIDOU
-apply -d SBAS
+for g in $all_gnss; do
+    case " $NTP250_GNSS " in
+    *" $g "*) apply -e "$g" ;;
+    *) apply -d "$g" ;;
+    esac
+done
 apply -p MODEL,2
 apply -p CFG-MSG,0xf0,0x01,0
 apply -p CFG-MSG,0xf0,0x02,0
