@@ -159,14 +159,13 @@ Status: done.
    ```
    The Debian pool in `chrony.conf` provides sanity sources.
 4. Calibrate the NMEA offset: after 1 h, set it from `chronyc sourcestats` so that NMEA ~= PPS.
-5. Support holdover and power loss: boot with a sane clock before GPS lock.  The RTC loses time with power off, so this needs a saved clock (Phase 6, maybe).
 
 **Done when:**
 - `chronyc tracking` shows Stratum 1 with PPS selected
 - after 24 h, the PPS offset std dev is under 1 us and system time is within 10 us of PPS
 - LAN clients sync to the box
 
-Status: done (NOTES.md "24 h run"); item 5 waits on the saved clock.
+Status: done (NOTES.md "24 h run").
 
 ## Phase 5: Validation (workstation)
 
@@ -183,9 +182,7 @@ Status: done (NOTES.md "48 h run").
 ## Phase 6: Polish
 
 - Button factory reset (SW1 held > 14 s; stock `cc_defaults`): define what it resets; now a no-op.
-- Read-only root, or overlayfs, to protect the SD card.
 - SD writes: 3.4 GB/day, 87% chronymond (NOTES.md "SD writes"); chronymond's write rate is with chronymon.
-- README with restore steps: insert the stock card, or `dd` the backup image onto any card of 8 GB or more.
 
 ## Upstream (ask first)
 
@@ -196,4 +193,6 @@ Status: done (NOTES.md "48 h run").
 
 - PTP. The 10/100 MAC likely lacks hardware timestamping; revisit only if the SoC supports it.
 - Modifying the base board.
+- Serving before GPS lock: no saved clock across power loss; clients get time once chrony has synchronized.
+- Read-only root: apt, unattended upgrades and the kernel trial write it.
 - Fitting the `tempcomp` coefficients: chronymon's work (its web UI fits linear and quadratic `tempcomp` lines); this repo logs `tempcomp.log` and `tracking.log` (`site/chronos`) and ships zero coefficients.
