@@ -244,6 +244,19 @@ chronymond is 87% of data partition writes.  Its database grows far
 less than it writes: 159 MB on 2026-11-09, 545 MB on 2026-11-19 (about
 42 MB/day).  First 30 min with chronymond 1.4.3: 3.1 GB/day.
 
+Measured again 2026-11-23 23:14 to 2026-11-27 02:05 UTC (269477 s, 3.12
+days, from boot of the v0.3.2 image; root includes first boot and one
+unattended upgrade), same sources: chronymond 1.5.0 with
+`CHRONYMOND_COMMIT_INTERVAL=120`; chrony without `rtc`.
+
+| Writer | Total | Per day |
+|---|---|---|
+| data partition (`mmcblk1p2`) | 2.99 GB | 958 MB |
+| root partition (`mmcblk1p1`) | 372 MB | 119 MB |
+| chronymond 1.5.0 | 1.39 GB | 446 MB |
+| data ext4 journal (`jbd2/mmcblk1p2-8`) | 142 MB | 45 MB |
+| chronyd | 173 MB | 56 MB |
+
 ## Power-loss holdover
 
 Test 2026-11-03: unit powered about 9 h (supercap charged), then all
