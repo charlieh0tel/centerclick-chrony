@@ -140,7 +140,7 @@ once for `SAVE` at boot (2026-11-23), not reproduced in 5 manual runs.
 |---|---|---|---|
 | Start state | factory defaults | `-p RESET` at 115200 and at 9600 | No leftovers (gpsd without `-b` had disabled RMC/GGA and saved it) |
 | UART1 speed | 115200 | `-s 9600 -S 115200` | Lower NMEA latency; stock used 115200 |
-| GNSS | GPS (with QZSS: ubxtool's `GPS` sets both); Galileo, GLONASS, BeiDou, SBAS off | `-e GPS -d GALILEO -d GLONASS -d BEIDOU -d SBAS` | Owner's choice: GPS only |
+| GNSS | `NTP250_GNSS` (`/usr/lib/ntp250/gps-config.env`, overridden by `/etc/default/ntp250-gps-config`), default GPS (with QZSS: ubxtool's `GPS` sets both); the rest of GPS, Galileo, GLONASS, BeiDou, SBAS off | `-e` each listed, `-d` the rest | Owner's choice: GPS only |
 | Dynamic model | 2, stationary | `-p MODEL,2` | Fixed antenna |
 | NMEA | GGA, RMC, ZDA at 1 Hz; GLL, GSA, GSV, VTG off | `-p CFG-MSG,0xf0,ID,RATE` | Only what gpsd needs for time; less latency |
 | Timepulse (CFG-TP5) | factory: 1 Hz, 100 ms when locked, none until locked, rising edge, aligned to the second, antCableDelay 50 ns | not changed | Matches chrony `refclock PPS` (assert edge) |
