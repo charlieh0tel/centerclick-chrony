@@ -181,7 +181,6 @@ Status: done (NOTES.md "48 h run").
 
 ## Phase 6: Polish
 
-- Button factory reset (SW1 held > 14 s; stock `cc_defaults`): define what it resets; now a no-op.
 - SD writes: 3.4 GB/day, 87% chronymond (NOTES.md "SD writes"); chronymond's write rate is with chronymon.
 
 ## Upstream (ask first)
@@ -195,4 +194,5 @@ Status: done (NOTES.md "48 h run").
 - Modifying the base board.
 - Serving before GPS lock: no saved clock across power loss; clients get time once chrony has synchronized.
 - Read-only root: apt, unattended upgrades and the kernel trial write it.
+- Factory reset (SW1 held > 14 s, stock `cc_defaults`): physical access is root, and reflashing is the reset.
 - Fitting the `tempcomp` coefficients: chronymon's work (its web UI fits linear and quadratic `tempcomp` lines); this repo logs `tempcomp.log` and `tracking.log` (`site/chronos`) and ships zero coefficients.
