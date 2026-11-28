@@ -61,6 +61,17 @@ jobs:
     - name: Lint
       run: shellcheck -S warning -x -P SCRIPTDIR image/build.sh image/rootfs-setup.sh package/build-ntp250-config.sh package/linux-image/* package/ntp250-config/preinst package/ntp250-config/postinst package/ntp250-config/prerm package/ntp250-config/postrm package/ntp250-config/root/usr/sbin/* package/ntp250-config/root/usr/share/kernel/*/*
 
+    - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
+
+    # Every tracked Python file, by extension or #! line (AGENTS.md:
+    # typing, mypy strict); none yet, so this passes until one is added.
+    - name: Type check
+      run: |
+        mapfile -t files < <({ git ls-files '*.py' '*.pyi'
+          git ls-files -z | xargs -0 awk 'FNR == 1 { if (/^#!.*python/) print FILENAME; nextfile }'; } | sort -u)
+        if (( ${#files[@]} == 0 )); then echo "no Python files"; exit 0; fi
+        uvx mypy@2.4.1 --strict "${files[@]}"
+
     - name: Build ntp250-config
       run: package/build-ntp250-config.sh out
 
