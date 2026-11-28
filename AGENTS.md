@@ -49,8 +49,8 @@
   the trivial or obvious.
 - Don't abbreviate by dropping letters from the middle of a word.
   Truncation (cutting from the end) is OK: `register` can shorten to
-  `reg` but not to `rgstr`.  Domain acronyms are fine (`odb`, `lcsc`,
-  `bom`, `cpl`).
+  `reg` but not to `rgstr`.  Domain acronyms are fine.
+- Use typing and mypy (strict).
 
 ## Rust
 
