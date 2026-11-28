@@ -59,7 +59,7 @@ the upgrade.
 | Job | Runner | Does |
 |---|---|---|
 | `kernel` | `ubuntu-24.04-arm` (native) | `image/build.sh kernel`; package cached under its release and `LINUX_INPUTS_SHA256`, so a hit only checks the inputs; artifact `linux-image` |
-| `deb` | `ubuntu-latest` | shellcheck; `build-ntp250-config.sh`; artifact `ntp250-config` |
+| `deb` | `ubuntu-latest` | shellcheck; `mypy --strict` on every tracked `*.py`, `*.pyi` and `#!...python` script (none yet); `build-ntp250-config.sh`; artifact `ntp250-config` |
 | `image` | `ubuntu-24.04-arm`, `debian:trixie` container, privileged | `v*` tag only: `image/build.sh uboot kernel config rootfs image` with the `kernel` job's package; no SSH key; artifact `ntp250-image` (`ntp250.img.xz`, `ntp250.img.sha256` of the uncompressed image) |
 | `release` | `ubuntu-latest` | `v*` tag only: GitHub release with both packages (apt-repo takes each repository's latest release only) and the image |
 | `trigger-apt-repo` | `ubuntu-latest` | `v*` tag without a hyphen: starts the apt-repo rebuild (`APT_REPO_TOKEN`) |
